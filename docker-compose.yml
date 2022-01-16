@@ -1,0 +1,39 @@
+version: '3.8'
+
+volumes:
+  prometheus_data: {}
+
+services:
+
+  prometheus:
+    image: prom/prometheus:v2.32.1
+    platform: linux/arm64
+    volumes:
+      - ../holajobs-config/prometheus:/etc/prometheus/
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+    ports:
+      - 9090:9090
+
+  mongo:
+    image: mongo
+    platform: linux/arm64
+    restart: always
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: root
+    volumes:
+      - "../holajobs-config/mongo/mongo-entrypoints/:/docker-entrypoint-initdb.d/"
+
+  servant:
+    build: .
+    platform: linux/arm64
+    ports:
+      - 3000:3000
+    depends_on: 
+      - mongo
+      - prometheus
