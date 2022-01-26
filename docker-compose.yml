@@ -28,10 +28,14 @@ services:
       MONGO_INITDB_ROOT_PASSWORD: root
     volumes:
       - "../holajobs-config/mongo/mongo-entrypoints/:/docker-entrypoint-initdb.d/"
+    ports:
+      - 27017:27017
 
   servant:
     build: .
     platform: linux/arm64
+    env_file: 
+      ../holajobs-config/user-manager/development.properties
     ports:
       - 3000:3000
     depends_on: 

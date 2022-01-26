@@ -1,0 +1,119 @@
+cabal-version: 1.12
+
+-- This file has been generated from package.yaml by hpack version 0.34.4.
+--
+-- see: https://github.com/sol/hpack
+
+name:           user-manager
+version:        0.1.0.0
+author:         Julio Gómez Campanario
+maintainer:     gomcam.julio@icloud.com
+copyright:      Holajobs Haskell 2020
+license:        MIT
+license-file:   LICENSE
+build-type:     Simple
+extra-source-files:
+    README.md
+
+library
+  exposed-modules:
+      API
+      API.User
+      App
+      Context
+      Database
+      Error.Constants
+      Error.Middleware
+      Error.Utils
+      Foundation
+      Logger
+      Model.User
+      Query.User
+      Service.UserManager
+      Types.User
+  other-modules:
+      Paths_user_manager
+  hs-source-dirs:
+      src
+  default-extensions:
+      OverloadedStrings
+      GADTs
+      BangPatterns
+      DataKinds
+      DerivingStrategies
+      FlexibleContexts
+      GeneralizedNewtypeDeriving
+      ImportQualifiedPost
+      ScopedTypeVariables
+      TypeFamilies
+      TypeOperators
+      FlexibleInstances
+      InstanceSigs
+      MultiParamTypeClasses
+      TemplateHaskell
+      EmptyDataDecls
+      QuasiQuotes
+      StandaloneDeriving
+      UndecidableInstances
+      NamedFieldPuns
+      RecordWildCards
+      DeriveGeneric
+      DuplicateRecordFields
+  ghc-options: -Wall -O2
+  build-depends:
+      aeson
+    , base >=4.9 && <5
+    , bytestring
+    , co-log
+    , conduit
+    , conferer
+    , conferer-warp
+    , http-types
+    , mongoDB
+    , mtl
+    , persistent
+    , persistent-mongoDB
+    , prometheus-client
+    , prometheus-metrics-ghc
+    , servant
+    , servant-server
+    , template-haskell
+    , text
+    , transformers
+    , unliftio
+    , wai
+    , wai-middleware-prometheus
+    , warp
+  default-language: Haskell2010
+
+executable user-manager
+  main-is: exe/Main.hs
+  other-modules:
+      Paths_user_manager
+  ghc-options: -Wall -O2 -threaded -rtsopts -with-rtsopts=-T
+  build-depends:
+      aeson
+    , base >=4.9 && <5
+    , bytestring
+    , co-log
+    , conduit
+    , conferer
+    , conferer-warp
+    , http-types
+    , mongoDB
+    , mtl
+    , persistent
+    , persistent-mongoDB
+    , prometheus-client
+    , prometheus-metrics-ghc
+    , servant
+    , servant-server
+    , template-haskell
+    , text
+    , transformers
+    , unliftio
+    , user-manager
+    , wai
+    , wai-middleware-prometheus
+    , warp
+  default-language: Haskell2010

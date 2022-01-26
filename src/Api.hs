@@ -1,27 +1,18 @@
-{-# LANGUAGE DataKinds #-}
-{-# LANGUAGE TypeFamilies #-}
-{-# LANGUAGE TypeOperators #-}
+module API where
 
-module Api where
-
+import API.User (UserAPI)
 import Data.Proxy (Proxy (Proxy))
 import Data.Text (Text)
-import Database.Persist (PersistEntity (Key))
-import Models (User)
 import Servant.API
-  ( Capture,
-    Get,
-    JSON,
-    Post,
-    ReqBody,
+  ( Get,
+    PlainText,
     type (:<|>),
     type (:>),
   )
 
 type Api =
-  "user" :> ReqBody '[JSON] User :> Post '[JSON] (Maybe (Key User))
-    :<|> "user" :> Capture "name" Text :> Get '[JSON] (Maybe User)
-    :<|> "hola" :> Get '[JSON] (Maybe String)
+  UserAPI
+    :<|> "routes" :> Get '[PlainText] Text
 
 api :: Proxy Api
 api = Proxy

@@ -1,0 +1,76 @@
+name: user-manager
+version: 0.1.0.0
+#github: 
+license: MIT
+author: "Julio Gómez Campanario"
+maintainer: "gomcam.julio@icloud.com"
+copyright: "Holajobs Haskell 2020"
+
+extra-source-files:
+  - README.md
+
+ghc-options:
+  - -Wall
+  - -O2 
+
+dependencies:
+  - base >=4.9 && <5
+  - aeson
+  - mtl
+  - mongoDB
+  - unliftio
+  - persistent
+  - persistent-mongoDB
+  - template-haskell
+  - servant
+  - servant-server
+  - text
+  - bytestring
+  - transformers
+  - wai
+  - wai-middleware-prometheus
+  - prometheus-client
+  - prometheus-metrics-ghc
+  - warp
+  - conferer
+  - conferer-warp
+  - co-log
+  - http-types
+  - conduit
+
+library:
+  source-dirs: src
+  default-extensions:
+    - OverloadedStrings
+    - GADTs
+    - BangPatterns
+    - DataKinds
+    - DerivingStrategies
+    - FlexibleContexts
+    - GeneralizedNewtypeDeriving
+    - ImportQualifiedPost
+    - ScopedTypeVariables
+    - TypeFamilies
+    - TypeOperators
+    - FlexibleInstances
+    - InstanceSigs
+    - MultiParamTypeClasses
+    - TemplateHaskell
+    - EmptyDataDecls
+    - QuasiQuotes
+    - StandaloneDeriving
+    - UndecidableInstances
+    - NamedFieldPuns
+    - RecordWildCards
+    - DeriveGeneric
+    - DuplicateRecordFields
+
+executables:
+  user-manager:
+    main: exe/Main.hs
+    dependencies: user-manager
+    ghc-options:
+      - -threaded
+      - -rtsopts 
+      - -with-rtsopts=-T
+

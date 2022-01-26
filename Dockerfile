@@ -1,11 +1,11 @@
 FROM haskell:8.10.7 as builder
 
-WORKDIR /example-servant-persistent
+WORKDIR /user-manager
 
 RUN cabal update
 
 # Add just the .cabal file to capture dependencies
-COPY ./example-servant-persistent.cabal /example-servant-persistent/example-servant-persistent.cabal
+COPY ./user-manager.cabal /user-manager/user-manager.cabal
 
 # Docker will cache this command as a layer, freeing us up to
 # modify source code without re-installing dependencies
@@ -13,8 +13,9 @@ COPY ./example-servant-persistent.cabal /example-servant-persistent/example-serv
 RUN cabal build --only-dependencies -j4
 
 # Add and Build Application Code
-COPY . /example-servant-persistent
+COPY . /user-manager
 RUN cabal build
+RUN strip /user-manager/dist-newstyle/build/aarch64-linux/ghc-8.10.7/user-manager-0.1.0.0/x/user-manager/build/user-manager/user-manager
 
 FROM debian:buster-slim
 ARG APP=/usr/src/app
@@ -35,11 +36,11 @@ RUN groupadd $APP_USER \
     && useradd -g $APP_USER $APP_USER \
     && mkdir -p ${APP}
 
-COPY --from=builder /example-servant-persistent/dist-newstyle/build/aarch64-linux/ghc-8.10.7/example-servant-persistent-0.1.0.0/x/example-servant-persistent/build/example-servant-persistent/example-servant-persistent ${APP}/example-servant-persistent
+COPY --from=builder /user-manager/dist-newstyle/build/aarch64-linux/ghc-8.10.7/user-manager-0.1.0.0/x/user-manager/build/user-manager/user-manager ${APP}/user-manager
 
 RUN chown -R $APP_USER:$APP_USER ${APP}
 
 USER $APP_USER
 WORKDIR ${APP}
 
-CMD ["./example-servant-persistent"]
+CMD ["./user-manager"]

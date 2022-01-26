@@ -1,0 +1,16 @@
+resolver: lts-18.23
+packages:
+  - '.'
+
+system-ghc: true
+compiler: ghc-8.10.7
+
+ghc-options:
+  "$locals": -Wall
+  "$targets": -Werror
+  "$everything": -O2
+
+extra-deps:
+- co-log-0.4.0.1
+- persistent-mongoDB-2.13.0.0
+- ansi-terminal-0.10.3
