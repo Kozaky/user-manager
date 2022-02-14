@@ -1,23 +1,24 @@
-module Model.User where
+module Model.User (User (..)) where
 
-import Data.Text (Text)
-import Database.Persist.MongoDB (MongoContext)
-import Database.Persist.TH
-  ( mkPersist,
-    mkPersistSettings,
-    persistLowerCase,
-    share,
-  )
-import Language.Haskell.TH.Syntax (Type (ConT))
+import Data.Bson (ObjectId, (=:))
+import qualified Data.Bson as Bson
+import qualified Data.Text as T
+import Database (Documentable (fromDocument, toDocument))
 
-let mongoSettings =
-      mkPersistSettings (ConT ''MongoContext)
- in share
-      [mkPersist mongoSettings]
-      [persistLowerCase|
-        User
-          name Text
-          email Text
-          password Text
-          deriving Eq Read Show
-      |]
+data User = User {id :: Maybe T.Text, name :: T.Text, email :: T.Text, password :: T.Text}
+  deriving (Eq, Read, Show)
+
+instance Documentable User where
+  fromDocument doc = do
+    let userId :: ObjectId = Bson.at "_id" doc
+        name = Bson.at "name" doc
+        email = Bson.at "email" doc
+        password = Bson.at "password" doc
+
+    User (Just . T.pack . show $ userId) name email password
+
+  toDocument (User _ name email password) =
+    [ "name" =: name,
+      "email" =: email,
+      "password" =: password
+    ]

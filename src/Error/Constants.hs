@@ -6,7 +6,7 @@ uuidGeneralError :: LB.ByteString
 uuidGeneralError = "1e799e9d-ff52-42f5-9165-b73780b38270"
 
 generalErrorMsg :: LB.ByteString
-generalErrorMsg = "Something went wrong"
+generalErrorMsg = "Server Error!!"
 
 uuidUserNotFound :: LB.ByteString
 uuidUserNotFound = "1be010e4-e8b9-442f-a62c-b318cfc4d0a0"

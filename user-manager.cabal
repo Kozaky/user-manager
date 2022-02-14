@@ -22,6 +22,7 @@ library
       App
       Context
       Database
+      DbConnection
       Error.Constants
       Error.Middleware
       Error.Utils
@@ -59,22 +60,22 @@ library
       RecordWildCards
       DeriveGeneric
       DuplicateRecordFields
+      LambdaCase
   ghc-options: -Wall -O2
   build-depends:
       aeson
     , base >=4.9 && <5
+    , bson
     , bytestring
     , co-log
-    , conduit
     , conferer
     , conferer-warp
     , http-types
     , mongoDB
     , mtl
-    , persistent
-    , persistent-mongoDB
     , prometheus-client
     , prometheus-metrics-ghc
+    , resource-pool
     , servant
     , servant-server
     , template-haskell
@@ -94,18 +95,17 @@ executable user-manager
   build-depends:
       aeson
     , base >=4.9 && <5
+    , bson
     , bytestring
     , co-log
-    , conduit
     , conferer
     , conferer-warp
     , http-types
     , mongoDB
     , mtl
-    , persistent
-    , persistent-mongoDB
     , prometheus-client
     , prometheus-metrics-ghc
+    , resource-pool
     , servant
     , servant-server
     , template-haskell

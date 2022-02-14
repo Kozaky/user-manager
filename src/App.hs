@@ -5,8 +5,7 @@ import API.User (userAPI)
 import Colog (logTextStdout, (<&))
 import Conferer (fetch, fetchFromConfig, mkConfig)
 import Conferer.FromConfig.Warp ()
-import Context (Ctx (Ctx))
-import Control.Exception (try)
+import Context (Context (Context))
 import Control.Monad.Except (ExceptT (ExceptT))
 import Control.Monad.Reader (ReaderT (runReaderT))
 import Data.Text (Text)
@@ -19,8 +18,9 @@ import Network.Wai.Middleware.Prometheus (PrometheusSettings (PrometheusSettings
 import Prometheus (register)
 import Prometheus.Metric.GHC (ghcMetrics)
 import Servant (Application, Handler (Handler), HasServer (ServerT), hoistServer, layout, serve, type (:<|>) ((:<|>)))
+import UnliftIO (try)
 
-runApp :: Ctx App -> App a -> IO a
+runApp :: Context App -> App a -> IO a
 runApp ctx application = runReaderT (unApp application) ctx
 
 server :: ServerT Api App
@@ -30,10 +30,10 @@ routesH :: App Text
 routesH = do
   return $ layout api
 
-app :: Ctx App -> Application
+app :: Context App -> Application
 app ctx = serve api $ hoistServer api (Handler . ExceptT . try . runApp ctx) server
 
-mkApp :: Ctx App -> IO Application
+mkApp :: Context App -> IO Application
 mkApp ctx = return $ app ctx
 
 run :: IO ()
@@ -42,7 +42,7 @@ run = do
   pool <- mkPool cfg
   logger <- mkLogger cfg
 
-  let ctx = Ctx cfg pool logger
+  let ctx = Context cfg pool logger
   myApp <- mkApp ctx
 
   port <- Conferer.fetchFromConfig "server.port" cfg

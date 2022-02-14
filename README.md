@@ -13,7 +13,7 @@ stack exec user-manager
 Then you can query the server from a separate shell:
 
 ```shell
-curl -H 'Content-type: application/json' localhost:3000/users --data '{"name": "Dana", "email":"hola@hola.com", "age": 24, "password": "password"}'
+curl -H 'Content-type: application/json' localhost:3000/users --data '{"name": "Dana", "email":"hola@hola.com", "password": "password"}'
 
 curl -H 'Content-type: application/json' localhost:3000/users/6203f3dfd5cd0a0bba000000
 ```

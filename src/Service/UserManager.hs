@@ -1,41 +1,31 @@
 module Service.UserManager (getUser, createUser, editUser) where
 
-import Control.Exception (SomeException)
 import Data.Functor ((<&>))
 import qualified Data.Text as T
-import Database (runQuery)
+import Database (Documentable (fromDocument, toDocument), runQuery)
 import Foundation (App)
-import Model.User (Key, User (..))
 import Query.User
-  ( findUserByEmail,
-    findUserById,
+  ( findUserById,
     insertUser,
     updateUser,
   )
-import Types.User (EditUserReq)
+import Types.User (CreateUserReq, EditUserReq, UserDTO, userDTOfromUser, userFromCreateUserReq)
 
-createUser :: User -> App (Either T.Text (Key User))
-createUser newUser = do
-  runQuery $ do
-    exists <- findUserByEmail $ userEmail newUser
-    case exists of
-      Nothing -> insertUser newUser <&> Right
-      Just _ -> return $ Left "Email already used"
+createUser :: CreateUserReq -> App T.Text
+createUser req =
+  runQuery $
+    insertUser (toDocument $ userFromCreateUserReq req) <&> (T.pack . show)
 
-getUser :: Key User -> App (Either T.Text User)
+getUser :: T.Text -> App (Either T.Text UserDTO)
 getUser userId = do
   runQuery $ do
-    mUser <- findUserById userId
+    mDoc <- findUserById $ read . T.unpack $ userId
 
-    case mUser of
-      Just user -> return $ Right user
+    case mDoc of
+      Just doc -> return . Right . userDTOfromUser . fromDocument $ doc
       Nothing -> return $ Left "User not found"
 
-editUser :: Key User -> EditUserReq -> App (Either SomeException User)
-editUser userId req = do
+editUser :: T.Text -> EditUserReq -> App ()
+editUser userId req =
   runQuery $ do
-    mUser <- updateUser userId req
-
-    case mUser of
-      Right user -> return $ Right user
-      Left e -> return $ Left e
+    updateUser (read . T.unpack $ userId) req

@@ -1,20 +1,21 @@
-module Context where
+module Context (Context (..)) where
 
 import Colog (HasLog (getLogAction, setLogAction), LogAction, Message)
 import Conferer (Config)
-import Database.Persist.MongoDB (ConnectionPool)
+import Data.Pool (Pool)
+import DbConnection (DbConnection)
 
-data Ctx m = Ctx
+data Context m = Context
   { config :: !Config,
-    dbPool :: !ConnectionPool,
+    dbPool :: !(Pool DbConnection),
     envLogAction :: !(LogAction m Message)
   }
 
-instance HasLog (Ctx m) Message m where
-  getLogAction :: Ctx m -> LogAction m Message
+instance HasLog (Context m) Message m where
+  getLogAction :: Context m -> LogAction m Message
   getLogAction = envLogAction
   {-# INLINE getLogAction #-}
 
-  setLogAction :: LogAction m Message -> Ctx m -> Ctx m
-  setLogAction newLogAction ctx = ctx {envLogAction = newLogAction}
+  setLogAction :: LogAction m Message -> Context m -> Context m
+  setLogAction newLogAction context = context {envLogAction = newLogAction}
   {-# INLINE setLogAction #-}

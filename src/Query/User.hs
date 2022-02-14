@@ -1,38 +1,30 @@
 module Query.User (findUserByEmail, insertUser, findUserById, updateUser) where
 
-import Control.Exception (SomeException)
-import Data.Text (Text)
+import Data.Bson (Document, ObjectId, Value, (=:))
+import qualified Data.Text as T
 import Database (QueryAction)
-import Database.Persist.Sql
-  ( Entity,
-    PersistEntity (Key),
-    PersistQueryRead (selectFirst),
-    PersistStoreRead (get),
-    PersistStoreWrite (insert, updateGet),
-    Update,
-    (=.),
-    (==.),
-  )
-import Model.User (EntityField (UserEmail, UserName, UserPassword), User)
-import Types.User (EditUserReq, Request (Request), emailAsText)
-import UnliftIO.Exception (tryAny)
+import Database.MongoDB.Query (Select (select), findOne, insert, modify)
+import Types.User (EditUserReq, Request (Request), unEmail)
 
-findUserByEmail :: Text -> QueryAction (Maybe (Entity User))
-findUserByEmail email = selectFirst [UserEmail ==. email] []
+findUserByEmail :: T.Text -> QueryAction (Maybe Document)
+findUserByEmail email = findOne (select ["email" =: email] "user")
 
-insertUser :: User -> QueryAction (Key User)
-insertUser = insert
+insertUser :: Document -> QueryAction Value
+insertUser = insert "user"
 
-findUserById :: Key User -> QueryAction (Maybe User)
-findUserById = get
+findUserById :: ObjectId -> QueryAction (Maybe Document)
+findUserById userId = findOne (select ["_id" =: userId] "user")
 
-updateUser :: Key User -> EditUserReq -> QueryAction (Either SomeException User)
+updateUser :: ObjectId -> EditUserReq -> QueryAction ()
 updateUser userId req = do
   let updates = mkUpdates req
-  tryAny $ updateGet userId updates
+  modify (select ["_id" =: userId] "user") updates
 
-mkUpdates :: EditUserReq -> [Update User]
-mkUpdates (Request name email password) =
-  maybe [] (\v -> [UserName =. v]) name
-    ++ maybe [] (\v -> [UserEmail =. emailAsText v]) email
-    ++ maybe [] (\v -> [UserPassword =. v]) password
+mkUpdates :: EditUserReq -> Document
+mkUpdates (Request name email password) = do
+  let updates =
+        maybe [] (\v -> ["name" =: v]) name
+          ++ maybe [] (\v -> ["email" =: unEmail v]) email
+          ++ maybe [] (\v -> ["password" =: v]) password
+
+  ["$set" =: updates]

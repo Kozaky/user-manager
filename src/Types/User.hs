@@ -1,4 +1,4 @@
-module Types.User (UserDTO (..), CreateUserReq, userDTOfromUser, userFromCreateUserReq, mkEmail, Email, EditUserReq, Request (..), emailAsText) where
+module Types.User (UserDTO (..), CreateUserReq, userDTOfromUser, userFromCreateUserReq, mkEmail, Email (unEmail), EditUserReq, Request (..)) where
 
 import Data.Aeson
   ( FromJSON (parseJSON),
@@ -9,12 +9,12 @@ import Data.Aeson
   )
 import qualified Data.ByteString.Lazy.Char8 as B
 import Data.Functor.Identity (Identity, runIdentity)
+import Data.Maybe (fromMaybe)
 import qualified Data.Text as T
-import Database.Persist.MongoDB (keyToOid)
 import Error.Constants (uuidInvalidEmail)
 import Error.Utils (mkErrorMsg)
 import GHC.Generics (Generic)
-import Model.User (Key, User (User, userEmail, userName, userPassword))
+import Model.User (User (..))
 
 data UserDTO = UserDTO
   { id :: !T.Text,
@@ -26,10 +26,10 @@ data UserDTO = UserDTO
 instance ToJSON UserDTO where
   toEncoding = genericToEncoding defaultOptions
 
-userDTOfromUser :: (Key User, User) -> UserDTO
-userDTOfromUser (userId, User {userName, userEmail}) =
+userDTOfromUser :: User -> UserDTO
+userDTOfromUser (User userId userName userEmail _) =
   UserDTO
-    { id = T.pack . show . keyToOid $ userId,
+    { id = fromMaybe "" userId,
       name = userName,
       email = userEmail
     }
@@ -56,15 +56,13 @@ instance FromJSON EditUserReq
 userFromCreateUserReq :: CreateUserReq -> User
 userFromCreateUserReq (Request name email password) =
   User
-    { userName = runIdentity name,
-      userEmail = unEmail $ runIdentity email,
-      userPassword = runIdentity password
+    { id = Nothing,
+      name = runIdentity name,
+      email = unEmail $ runIdentity email,
+      password = runIdentity password
     }
 
 newtype Email = Email {unEmail :: T.Text} deriving (Show)
-
-emailAsText :: Email -> T.Text
-emailAsText = unEmail
 
 mkEmail :: T.Text -> Either B.ByteString Email
 mkEmail text
