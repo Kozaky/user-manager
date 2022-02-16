@@ -5,11 +5,12 @@ import Conferer (Config, fetchFromConfig)
 import Context (Context (Context, dbPool))
 import Control.Monad.RWS (MonadReader (ask))
 import Control.Monad.Reader (ReaderT)
+import Data.Bson ((=:))
 import qualified Data.Bson as Bson
 import Data.Pool (Pool, createPool, withResource)
 import qualified Data.Text as T
 import Database.MongoDB.Connection (Host (Host), Pipe, close, connect, defaultPort)
-import Database.MongoDB.Query (AccessMode (UnconfirmedWrites), Action, Failure, MongoContext, access, auth, master)
+import Database.MongoDB.Query (AccessMode (ConfirmWrites, UnconfirmedWrites), Action, Failure, MongoContext, access, auth)
 import DbConnection (DbAuth (DbAuth), DbConnection (DbConnection))
 import Error.Constants (generalErrorMsg)
 import Foundation (App)
@@ -51,7 +52,7 @@ runQuery action = do
   withRunInIO $ \run ->
     withResource dbPool $ \(DbConnection pipe db) -> run $ do
       catch
-        (access pipe master db action)
+        (access pipe (ConfirmWrites ["wtimeout" =: (5000 :: Int)]) db action)
         ( \(err :: Failure) -> do
             logError $ T.append "There has been a database error: " (T.pack . show $ err)
             throwIO $ err500 {errBody = generalErrorMsg}
