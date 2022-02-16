@@ -1,16 +1,15 @@
-module Database (mkPool, runQuery, QueryAction, Documentable (..)) where
+module Database (mkPool, runQuery, QueryAction, Documentable (..), DbFailure (..)) where
 
 import Colog (logError)
 import Conferer (Config, fetchFromConfig)
 import Context (Context (Context, dbPool))
 import Control.Monad.RWS (MonadReader (ask))
 import Control.Monad.Reader (ReaderT)
-import Data.Bson ((=:))
 import qualified Data.Bson as Bson
 import Data.Pool (Pool, createPool, withResource)
 import qualified Data.Text as T
 import Database.MongoDB.Connection (Host (Host), Pipe, close, connect, defaultPort)
-import Database.MongoDB.Query (AccessMode (ConfirmWrites, UnconfirmedWrites), Action, Failure, MongoContext, access, auth)
+import Database.MongoDB.Query (AccessMode (UnconfirmedWrites), Action, Failure, MongoContext, access, auth, master)
 import DbConnection (DbAuth (DbAuth), DbConnection (DbConnection))
 import Error.Constants (generalErrorMsg)
 import Foundation (App)
@@ -28,14 +27,14 @@ mkPool config = do
   dbMaxIdle :: Integer <- Conferer.fetchFromConfig "mongo.db.pool.iddle" config
 
   createPool
-    (createPipe dbHost dbName (DbAuth dbUser dbPassword))
+    (createConnection dbHost dbName (DbAuth dbUser dbPassword))
     (\(DbConnection pipe _) -> close pipe)
     dbPoolSize
     (fromInteger dbMaxIdle)
     dbConns
 
-createPipe :: String -> T.Text -> DbAuth -> IO DbConnection
-createPipe dbHost dbName dbAuth = do
+createConnection :: String -> T.Text -> DbAuth -> IO DbConnection
+createConnection dbHost dbName dbAuth = do
   pipe <- connect (Host dbHost defaultPort)
   testAccess pipe dbName dbAuth
   return $ DbConnection pipe dbName
@@ -52,11 +51,13 @@ runQuery action = do
   withRunInIO $ \run ->
     withResource dbPool $ \(DbConnection pipe db) -> run $ do
       catch
-        (access pipe (ConfirmWrites ["wtimeout" =: (5000 :: Int)]) db action)
+        (access pipe master db action)
         ( \(err :: Failure) -> do
             logError $ T.append "There has been a database error: " (T.pack . show $ err)
             throwIO $ err500 {errBody = generalErrorMsg}
         )
+
+data DbFailure = DbFailure {code :: Int, msg :: String, result :: Maybe [Failure]} deriving (Show)
 
 type QueryAction a = ReaderT MongoContext App a
 

@@ -26,7 +26,6 @@ dependencies:
   - servant-server
   - text
   - bytestring
-  - transformers
   - wai
   - wai-middleware-prometheus
   - prometheus-client

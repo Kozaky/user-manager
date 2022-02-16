@@ -2,7 +2,7 @@ module Service.UserManager (getUser, createUser, editUser) where
 
 import Data.Functor ((<&>))
 import qualified Data.Text as T
-import Database (Documentable (fromDocument, toDocument), runQuery)
+import Database (DbFailure, Documentable (fromDocument, toDocument), runQuery)
 import Foundation (App)
 import Query.User
   ( findUserById,
@@ -25,7 +25,6 @@ getUser userId = do
       Just doc -> return . Right . userDTOfromUser . fromDocument $ doc
       Nothing -> return $ Left "User not found"
 
-editUser :: T.Text -> EditUserReq -> App ()
-editUser userId req =
-  runQuery $ do
-    updateUser (read . T.unpack $ userId) req
+editUser :: T.Text -> EditUserReq -> App (Either DbFailure ())
+editUser userId req = do
+  runQuery $ updateUser (read . T.unpack $ userId) req

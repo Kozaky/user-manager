@@ -80,7 +80,6 @@ library
     , servant-server
     , template-haskell
     , text
-    , transformers
     , unliftio
     , wai
     , wai-middleware-prometheus
@@ -110,7 +109,6 @@ executable user-manager
     , servant-server
     , template-haskell
     , text
-    , transformers
     , unliftio
     , user-manager
     , wai
