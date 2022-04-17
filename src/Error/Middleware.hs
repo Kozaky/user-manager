@@ -1,12 +1,15 @@
 module Error.Middleware (catchErrorMiddleware) where
 
 import Data.Aeson (ToJSON (toJSON), Value (Object), encode)
-import qualified Data.ByteString as B
+import Data.Bifunctor (second)
+import Data.ByteString qualified as B
 import Data.ByteString.Builder (toLazyByteString)
-import qualified Data.ByteString.Char8 as Char8
-import qualified Data.ByteString.Lazy as LB
+import Data.ByteString.Char8 qualified as Char8
+import Data.ByteString.Lazy qualified as LB
+import Data.Char qualified as Char
 import Data.IORef (modifyIORef', newIORef, readIORef)
-import Error.Constants (generalErrorMsg, uuidGeneralError)
+import Error.Constants (serverError, serverErrorMsg)
+import Error.Utils (customErrorPrefix, customErrorSufix)
 import GHC.Exts (fromList)
 import Network.HTTP.Types (Status (Status), hContentType)
 import Network.Wai (Middleware, Response, responseLBS, responseStatus, responseToStream)
@@ -18,7 +21,8 @@ catchErrorMiddleware baseApp req respond =
     body <- responseBody response
 
     case status of
-      (Status code _msg) | code >= 400 && code < 500 -> respond $ formatResponse code body
+      (Status code@404 _) | body == "" -> respond $ formatResponse code "Not Found"
+      (Status code _) | code >= 400 && code < 500 -> respond $ formatResponse code body
       _ -> respond response
 
 responseBody :: Response -> IO B.ByteString
@@ -41,13 +45,13 @@ formatBody body = do
   let parsedBody = parseBody body
 
   case parsedBody of
-    ("", "") | body == "" -> mkBody (LB.toStrict uuidGeneralError) (LB.toStrict generalErrorMsg)
-    ("", "") -> mkBody (LB.toStrict uuidGeneralError) body
-    ("", errorMsg) -> mkBody (LB.toStrict uuidGeneralError) errorMsg
-    (code, errorMsg) -> mkBody code errorMsg
+    ("", "") | body == "" -> makeBody (LB.toStrict serverError) (LB.toStrict serverErrorMsg)
+    ("", "") -> makeBody (LB.toStrict serverError) body
+    ("", errorMsg) -> makeBody (LB.toStrict serverError) errorMsg
+    (code, errorMsg) -> makeBody code errorMsg
 
-mkBody :: B.ByteString -> B.ByteString -> LB.ByteString
-mkBody code errorMsg =
+makeBody :: B.ByteString -> B.ByteString -> LB.ByteString
+makeBody code errorMsg =
   encode $
     Object $
       fromList
@@ -57,9 +61,10 @@ mkBody code errorMsg =
 
 parseBody :: B.ByteString -> (B.ByteString, B.ByteString)
 parseBody =
-  B.splitAt 37
+  second (B.drop 1)
+    . B.break ((==) $ fromIntegral $ Char.ord ':')
     . fst
-    . B.breakSubstring "#error}"
-    . B.drop 9
+    . B.breakSubstring (LB.toStrict customErrorSufix)
+    . B.drop (fromIntegral $ LB.length customErrorPrefix)
     . snd
-    . B.breakSubstring "{#error -"
+    . B.breakSubstring (LB.toStrict customErrorPrefix)

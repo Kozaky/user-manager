@@ -11,7 +11,7 @@ import qualified Data.ByteString.Lazy.Char8 as B
 import Data.Functor.Identity (Identity, runIdentity)
 import Data.Maybe (fromMaybe)
 import qualified Data.Text as T
-import Error.Constants (uuidInvalidEmail)
+import Error.Constants (invalidEmail)
 import Error.Utils (mkErrorMsg)
 import GHC.Generics (Generic)
 import Model.User (User (..))
@@ -67,7 +67,7 @@ newtype Email = Email {unEmail :: T.Text} deriving (Show)
 mkEmail :: T.Text -> Either B.ByteString Email
 mkEmail text
   | T.any (== '@') text = Right $ Email text
-  | otherwise = Left $ mkErrorMsg uuidInvalidEmail "Invalid Email"
+  | otherwise = Left $ mkErrorMsg invalidEmail "Invalid Email"
 
 instance FromJSON Email where
   parseJSON = withText "email" $ \text -> do

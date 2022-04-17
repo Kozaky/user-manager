@@ -5,13 +5,13 @@ import Conferer (Config, fetchFromConfig)
 import Context (Context (Context, dbPool))
 import Control.Monad.RWS (MonadReader (ask))
 import Control.Monad.Reader (ReaderT)
-import qualified Data.Bson as Bson
+import Data.Bson qualified as Bson
 import Data.Pool (Pool, createPool, withResource)
-import qualified Data.Text as T
+import Data.Text qualified as T
 import Database.MongoDB.Connection (Host (Host), Pipe, close, connect, defaultPort)
 import Database.MongoDB.Query (AccessMode (UnconfirmedWrites), Action, Failure, MongoContext, access, auth, master)
 import DbConnection (DbAuth (DbAuth), DbConnection (DbConnection))
-import Error.Constants (generalErrorMsg)
+import Error.Constants (serverErrorMsg)
 import Foundation (App)
 import Servant (ServerError (errBody), err500)
 import UnliftIO (MonadUnliftIO (withRunInIO), catch, throwIO)
@@ -54,7 +54,7 @@ runQuery action = do
         (access pipe master db action)
         ( \(err :: Failure) -> do
             logError $ T.append "There has been a database error: " (T.pack . show $ err)
-            throwIO $ err500 {errBody = generalErrorMsg}
+            throwIO $ err500 {errBody = serverErrorMsg}
         )
 
 data DbFailure = DbFailure {code :: Int, msg :: String, result :: Maybe [Failure]} deriving (Show)

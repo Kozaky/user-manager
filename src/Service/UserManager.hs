@@ -26,5 +26,4 @@ getUser userId = do
       Nothing -> return $ Left "User not found"
 
 editUser :: T.Text -> EditUserReq -> App (Either DbFailure ())
-editUser userId req = do
-  runQuery $ updateUser (read . T.unpack $ userId) req
+editUser userId req = runQuery $ updateUser (read . T.unpack $ userId) req

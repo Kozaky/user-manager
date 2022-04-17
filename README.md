@@ -15,5 +15,7 @@ Then you can query the server from a separate shell:
 ```shell
 curl -H 'Content-type: application/json' localhost:3000/users --data '{"name": "Dana", "email":"hola@hola.com", "password": "password"}'
 
-curl -H 'Content-type: application/json' localhost:3000/users/6203f3dfd5cd0a0bba000000
+curl -H 'Content-type: application/json' localhost:3000/users/620949efd5cd0a08b2000000
+
+curl -H 'Content-type: application/json' -X PUT localhost:3000/users/620949efd5cd0a08b2000000 --data '{"email": "gocam.julio@gmail.com" }'
 ```

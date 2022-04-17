@@ -3,7 +3,7 @@ module API.User (userAPI, UserAPI) where
 import Colog (logError)
 import qualified Data.Text as T
 import Database (DbFailure (DbFailure))
-import Error.Constants (generalErrorMsg, uuidAlreadyUsedEmail, uuidUserNotFound)
+import Error.Constants (alreadyUsedEmail, serverError, userNotFound)
 import Error.Utils (mkErrorMsg)
 import Foundation (App)
 import Servant (JSON, NoContent (NoContent), Put, ReqBody, ServerError (errBody), ServerT, err400, err404, err500, type (:>))
@@ -36,12 +36,12 @@ getUserH userId = do
 
   case result of
     Right user -> return user
-    Left _ ->
+    Left _ -> do
       liftIO . throwIO $
         err404
           { errBody =
               mkErrorMsg
-                uuidUserNotFound
+                userNotFound
                 "User not found"
           }
 
@@ -56,7 +56,7 @@ editUserH userId req = do
         err400
           { errBody =
               mkErrorMsg
-                uuidAlreadyUsedEmail
+                alreadyUsedEmail
                 "The email is already used"
           }
     Left (DbFailure code msg Nothing) -> do
@@ -65,10 +65,10 @@ editUserH userId req = do
           <> (T.pack . show $ code)
           <> " and message: "
           <> T.pack msg
-      liftIO . throwIO $ err500 {errBody = generalErrorMsg}
+      liftIO . throwIO $ err500 {errBody = serverError}
     Left (DbFailure _ _ (Just err)) -> do
       logError $ "An error have been thrown during the updating: " <> (T.pack . show $ err)
       liftIO . throwIO $
         err500
-          { errBody = generalErrorMsg
+          { errBody = serverError
           }
