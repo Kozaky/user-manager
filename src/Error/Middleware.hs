@@ -8,11 +8,11 @@ import Data.ByteString.Char8 qualified as Char8
 import Data.ByteString.Lazy qualified as LB
 import Data.Char qualified as Char
 import Data.IORef (modifyIORef', newIORef, readIORef)
-import Error.Constants (serverError, serverErrorMsg)
 import Error.Utils (customErrorPrefix, customErrorSufix)
 import GHC.Exts (fromList)
 import Network.HTTP.Types (Status (Status), hContentType)
 import Network.Wai (Middleware, Response, responseLBS, responseStatus, responseToStream)
+import Error.Types (ApiError(key, msg), CustomServerError (InternalServerError))
 
 catchErrorMiddleware :: Middleware
 catchErrorMiddleware baseApp req respond =
@@ -21,8 +21,8 @@ catchErrorMiddleware baseApp req respond =
     body <- responseBody response
 
     case status of
-      (Status code@404 _) | body == "" -> respond $ formatResponse code "Not Found"
-      (Status code _) | code >= 400 && code < 500 -> respond $ formatResponse code body
+      (Status 404 _) | body == "" -> respond $ formatResponse 404 "Not Found"
+      (Status code _) | code >= 400 && code <= 500 -> respond $ formatResponse code body
       _ -> respond response
 
 responseBody :: Response -> IO B.ByteString
@@ -45,9 +45,9 @@ formatBody body = do
   let parsedBody = parseBody body
 
   case parsedBody of
-    ("", "") | body == "" -> makeBody (LB.toStrict serverError) (LB.toStrict serverErrorMsg)
-    ("", "") -> makeBody (LB.toStrict serverError) body
-    ("", errorMsg) -> makeBody (LB.toStrict serverError) errorMsg
+    ("", "") | body == "" -> makeBody (LB.toStrict $ key InternalServerError) (LB.toStrict $ msg InternalServerError)
+    ("", "") -> makeBody (LB.toStrict $ key InternalServerError) body
+    ("", errorMsg) -> makeBody (LB.toStrict $ key InternalServerError) errorMsg
     (code, errorMsg) -> makeBody code errorMsg
 
 makeBody :: B.ByteString -> B.ByteString -> LB.ByteString
@@ -55,7 +55,8 @@ makeBody code errorMsg =
   encode $
     Object $
       fromList
-        [ ("code", toJSON . Char8.unpack . Char8.strip $ code),
+        [
+          ("code", toJSON . Char8.unpack . Char8.strip $ code),
           ("errorMsg", toJSON . Char8.unpack . Char8.strip $ errorMsg)
         ]
 

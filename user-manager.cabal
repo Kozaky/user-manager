@@ -23,8 +23,8 @@ library
       Context
       Database
       DbConnection
-      Error.Constants
       Error.Middleware
+      Error.Types
       Error.Utils
       Foundation
       Logger

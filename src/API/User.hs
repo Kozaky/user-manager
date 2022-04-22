@@ -2,11 +2,9 @@ module API.User (userAPI, UserAPI) where
 
 import Colog (logError)
 import qualified Data.Text as T
-import Database (DbFailure (DbFailure))
-import Error.Constants (alreadyUsedEmail, serverError, userNotFound)
-import Error.Utils (mkErrorMsg)
+import Error.Types (ApiError (toServantError), CustomServerError (InternalServerError), UserError (UserNotFoundError))
 import Foundation (App)
-import Servant (JSON, NoContent (NoContent), Put, ReqBody, ServerError (errBody), ServerT, err400, err404, err500, type (:>))
+import Servant (JSON, NoContent (NoContent), Put, ReqBody, ServerT, type (:>))
 import Servant.API (Capture, Get, Post, type (:<|>) ((:<|>)))
 import Service.UserManager (createUser, editUser, getUser)
 import Types.User (CreateUserReq, EditUserReq, UserDTO)
@@ -37,13 +35,7 @@ getUserH userId = do
   case result of
     Right user -> return user
     Left _ -> do
-      liftIO . throwIO $
-        err404
-          { errBody =
-              mkErrorMsg
-                userNotFound
-                "User not found"
-          }
+      liftIO . throwIO $ toServantError UserNotFoundError
 
 editUserH :: T.Text -> EditUserReq -> App NoContent
 editUserH userId req = do
@@ -51,24 +43,8 @@ editUserH userId req = do
 
   case result of
     Right () -> return NoContent
-    Left (DbFailure 11000 _ Nothing) ->
-      liftIO . throwIO $
-        err400
-          { errBody =
-              mkErrorMsg
-                alreadyUsedEmail
-                "The email is already used"
-          }
-    Left (DbFailure code msg Nothing) -> do
+    Left dbFailure -> do
       logError $
-        "An error have been thrown during the updating with code: "
-          <> (T.pack . show $ code)
-          <> " and message: "
-          <> T.pack msg
-      liftIO . throwIO $ err500 {errBody = serverError}
-    Left (DbFailure _ _ (Just err)) -> do
-      logError $ "An error have been thrown during the updating: " <> (T.pack . show $ err)
-      liftIO . throwIO $
-        err500
-          { errBody = serverError
-          }
+        "There has been an error during the updating with info: " <> (T.pack . show $ dbFailure)
+
+      liftIO . throwIO $ toServantError InternalServerError

@@ -1,4 +1,4 @@
-module Database (mkPool, runQuery, QueryAction, Documentable (..), DbFailure (..)) where
+module Database (mkPool, runQuery, QueryAction, Documentable (..), DbFailure (..), checkWriteResult) where
 
 import Colog (logError)
 import Conferer (Config, fetchFromConfig)
@@ -9,12 +9,11 @@ import Data.Bson qualified as Bson
 import Data.Pool (Pool, createPool, withResource)
 import Data.Text qualified as T
 import Database.MongoDB.Connection (Host (Host), Pipe, close, connect, defaultPort)
-import Database.MongoDB.Query (AccessMode (UnconfirmedWrites), Action, Failure, MongoContext, access, auth, master)
+import Database.MongoDB.Query (AccessMode (UnconfirmedWrites), Action, Failure (WriteFailure), MongoContext, access, auth, master, WriteResult (WriteResult))
 import DbConnection (DbAuth (DbAuth), DbConnection (DbConnection))
-import Error.Constants (serverErrorMsg)
 import Foundation (App)
-import Servant (ServerError (errBody), err500)
 import UnliftIO (MonadUnliftIO (withRunInIO), catch, throwIO)
+import Error.Types (ApiError(toServantError), CustomServerError (InternalServerError))
 
 mkPool :: Config -> IO (Pool DbConnection)
 mkPool config = do
@@ -54,10 +53,15 @@ runQuery action = do
         (access pipe master db action)
         ( \(err :: Failure) -> do
             logError $ T.append "There has been a database error: " (T.pack . show $ err)
-            throwIO $ err500 {errBody = serverErrorMsg}
+            throwIO $ toServantError InternalServerError
         )
 
 data DbFailure = DbFailure {code :: Int, msg :: String, result :: Maybe [Failure]} deriving (Show)
+
+checkWriteResult :: WriteResult -> Either DbFailure ()
+checkWriteResult (WriteResult True _ _ _ _ [WriteFailure _ code msg] _) = Left $ DbFailure code msg Nothing
+checkWriteResult (WriteResult True _ _ _ _ result _) = Left $ DbFailure (-1) "" (Just result)
+checkWriteResult (WriteResult False _ _ _ _ _ _) = Right ()
 
 type QueryAction a = ReaderT MongoContext App a
 
