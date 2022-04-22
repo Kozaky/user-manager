@@ -2,13 +2,14 @@ module API.User (userAPI, UserAPI) where
 
 import Colog (logError)
 import qualified Data.Text as T
-import Error.Types (ApiError (toServantError), CustomServerError (InternalServerError), UserError (UserNotFoundError))
+import Error.Types (ApiError (toServantError), CustomServerError (InternalServerError))
 import Foundation (App)
 import Servant (JSON, NoContent (NoContent), Put, ReqBody, ServerT, type (:>))
 import Servant.API (Capture, Get, Post, type (:<|>) ((:<|>)))
 import Service.UserManager (createUser, editUser, getUser)
 import Types.User (CreateUserReq, EditUserReq, UserDTO)
 import UnliftIO (liftIO, throwIO)
+import Prelude hiding (error)
 
 type UserAPI =
   "users" :> (CreateUser :<|> GetUser :<|> EditUser)
@@ -34,8 +35,8 @@ getUserH userId = do
 
   case result of
     Right user -> return user
-    Left _ -> do
-      liftIO . throwIO $ toServantError UserNotFoundError
+    Left error -> do
+      liftIO . throwIO $ toServantError error
 
 editUserH :: T.Text -> EditUserReq -> App NoContent
 editUserH userId req = do
