@@ -73,3 +73,20 @@ executables:
       - -rtsopts 
       - -with-rtsopts=-T
 
+tests:
+  spec:
+    main: Spec.hs
+    source-dirs: test
+    default-extensions: 
+      - ExplicitNamespaces
+      - DataKinds
+    dependencies:
+      - user-manager
+      - hspec
+      - hspec-wai
+      - QuickCheck
+      - servant-quickcheck
+      - servant-client
+      - http-client
+      - hspec-discover
+

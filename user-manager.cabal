@@ -115,3 +115,47 @@ executable user-manager
     , wai-middleware-prometheus
     , warp
   default-language: Haskell2010
+
+test-suite spec
+  type: exitcode-stdio-1.0
+  main-is: Spec.hs
+  other-modules:
+      API.UserSpec
+      Paths_user_manager
+  hs-source-dirs:
+      test
+  default-extensions:
+      ExplicitNamespaces
+      DataKinds
+  ghc-options: -Wall -O2
+  build-depends:
+      QuickCheck
+    , aeson
+    , base >=4.9 && <5
+    , bson
+    , bytestring
+    , co-log
+    , conferer
+    , conferer-warp
+    , hspec
+    , hspec-discover
+    , hspec-wai
+    , http-client
+    , http-types
+    , mongoDB
+    , mtl
+    , prometheus-client
+    , prometheus-metrics-ghc
+    , resource-pool
+    , servant
+    , servant-client
+    , servant-quickcheck
+    , servant-server
+    , template-haskell
+    , text
+    , unliftio
+    , user-manager
+    , wai
+    , wai-middleware-prometheus
+    , warp
+  default-language: Haskell2010

@@ -7,6 +7,7 @@ import Data.Aeson
     genericToEncoding,
     withText,
   )
+import Data.Aeson.Encoding (text)
 import qualified Data.ByteString.Lazy.Char8 as B
 import Data.Functor.Identity (Identity, runIdentity)
 import Data.Maybe (fromMaybe)
@@ -21,6 +22,8 @@ data UserDTO = UserDTO
     email :: !T.Text
   }
   deriving (Show, Generic)
+
+instance FromJSON UserDTO
 
 instance ToJSON UserDTO where
   toEncoding = genericToEncoding defaultOptions
@@ -46,11 +49,17 @@ deriving instance Show CreateUserReq
 
 instance FromJSON CreateUserReq
 
+instance ToJSON CreateUserReq where
+  toEncoding = genericToEncoding defaultOptions
+
 type EditUserReq = Request Maybe
 
 deriving instance Show EditUserReq
 
 instance FromJSON EditUserReq
+
+instance ToJSON EditUserReq where
+  toEncoding = genericToEncoding defaultOptions
 
 userFromCreateUserReq :: CreateUserReq -> User
 userFromCreateUserReq (Request name email password) =
@@ -61,16 +70,19 @@ userFromCreateUserReq (Request name email password) =
       password = runIdentity password
     }
 
-newtype Email = Email {unEmail :: T.Text} deriving (Show)
+newtype Email = Email {unEmail :: T.Text} deriving (Show, Generic)
 
-mkEmail :: T.Text -> Either B.ByteString Email
-mkEmail text
-  | T.any (== '@') text = Right $ Email text
-  | otherwise = Left $ toBody InvalidEmailError
+mkEmail :: T.Text -> Either UserError Email
+mkEmail emailText
+  | T.any (== '@') emailText = Right $ Email emailText
+  | otherwise = Left InvalidEmailError
 
 instance FromJSON Email where
-  parseJSON = withText "email" $ \text -> do
-    let mEmail = mkEmail text
+  parseJSON = withText "email" $ \emailText -> do
+    let mEmail = mkEmail emailText
     case mEmail of
       Right email -> return email
-      Left msg -> fail $ B.unpack msg
+      Left msg -> fail . B.unpack . toBody $ msg
+
+instance ToJSON Email where
+  toEncoding (Email unEmail) = text unEmail

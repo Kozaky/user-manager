@@ -1,4 +1,4 @@
-module API.User (userAPI, UserAPI) where
+module API.User (userAPI, UserAPI, CreateUser, GetUser, EditUser) where
 
 import Colog (logError)
 import qualified Data.Text as T

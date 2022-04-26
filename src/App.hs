@@ -1,4 +1,4 @@
-module App (run) where
+module App (run, app) where
 
 import API (Api, api)
 import API.User (userAPI)

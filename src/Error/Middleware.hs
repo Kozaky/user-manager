@@ -12,7 +12,7 @@ import Error.Utils (customErrorPrefix, customErrorSufix)
 import GHC.Exts (fromList)
 import Network.HTTP.Types (Status (Status), hContentType)
 import Network.Wai (Middleware, Response, responseLBS, responseStatus, responseToStream)
-import Error.Types (ApiError(key, msg), CustomServerError (InternalServerError))
+import Error.Types (ApiError(errorCode, errorMessage), CustomServerError (InternalServerError))
 
 catchErrorMiddleware :: Middleware
 catchErrorMiddleware baseApp req respond =
@@ -45,13 +45,13 @@ formatBody body = do
   let parsedBody = parseBody body
 
   case parsedBody of
-    ("", "") | body == "" -> makeBody (LB.toStrict $ key InternalServerError) (LB.toStrict $ msg InternalServerError)
-    ("", "") -> makeBody (LB.toStrict $ key InternalServerError) body
-    ("", errorMsg) -> makeBody (LB.toStrict $ key InternalServerError) errorMsg
-    (code, errorMsg) -> makeBody code errorMsg
+    ("", "") | body == "" -> mkBody (LB.toStrict $ errorCode InternalServerError) (LB.toStrict $ errorMessage InternalServerError)
+    ("", "") -> mkBody (LB.toStrict $ errorCode InternalServerError) body
+    ("", errorMsg) -> mkBody (LB.toStrict $ errorCode InternalServerError) errorMsg
+    (code, errorMsg) -> mkBody code errorMsg
 
-makeBody :: B.ByteString -> B.ByteString -> LB.ByteString
-makeBody code errorMsg =
+mkBody :: B.ByteString -> B.ByteString -> LB.ByteString
+mkBody code errorMsg =
   encode $
     Object $
       fromList

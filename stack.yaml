@@ -14,3 +14,4 @@ extra-deps:
 - co-log-0.4.0.1
 - persistent-mongoDB-2.13.0.0
 - ansi-terminal-0.10.3
+- servant-quickcheck-0.0.10.0

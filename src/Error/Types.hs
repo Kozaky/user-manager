@@ -6,20 +6,20 @@ import Servant (ServerError (ServerError, errBody, errHTTPCode, errHeaders, errR
 
 class ApiError e where
   httpCode :: e -> Int
-  key :: e -> LB.ByteString
-  msg :: e -> LB.ByteString
+  errorCode :: e -> LB.ByteString
+  errorMessage :: e -> LB.ByteString
 
   toServantError :: e -> ServerError
   toServantError e =
     ServerError
       { errHTTPCode = httpCode e,
         errReasonPhrase = "",
-        errBody = mkErrorMsg (key e) (msg e),
+        errBody = mkErrorMsg (errorCode e) (errorMessage e),
         errHeaders = []
       }
 
   toBody :: e -> LB.ByteString
-  toBody e = mkErrorMsg (key e) (msg e)
+  toBody e = mkErrorMsg (errorCode e) (errorMessage e)
 
 data CustomServerError = InternalServerError
   deriving (Show)
@@ -27,9 +27,9 @@ data CustomServerError = InternalServerError
 instance ApiError CustomServerError where
   httpCode InternalServerError = 500
 
-  key InternalServerError = "server_error"
+  errorCode InternalServerError = "server_error"
 
-  msg InternalServerError = "Internal Server Error"
+  errorMessage InternalServerError = "Internal Server Error"
 
 data UserError = UserNotFoundError | InvalidEmailError
   deriving (Show)
@@ -38,8 +38,8 @@ instance ApiError UserError where
   httpCode UserNotFoundError = 404
   httpCode InvalidEmailError = 400
 
-  key UserNotFoundError = "user_not_found"
-  key InvalidEmailError = "user_invalid_email"
+  errorCode UserNotFoundError = "user_not_found"
+  errorCode InvalidEmailError = "user_invalid_email"
 
-  msg UserNotFoundError = "User not found"
-  msg InvalidEmailError = "Invalid Email"
+  errorMessage UserNotFoundError = "User not found"
+  errorMessage InvalidEmailError = "Invalid Email"

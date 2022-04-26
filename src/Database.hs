@@ -3,13 +3,13 @@ module Database (mkPool, runQuery, QueryAction, Documentable (..), DbFailure (..
 import Colog (logError)
 import Conferer (Config, fetchFromConfig)
 import Context (Context (Context, dbPool))
-import Control.Monad.RWS (MonadReader (ask))
+import Control.Monad.RWS (MonadReader (ask), void)
 import Control.Monad.Reader (ReaderT)
 import Data.Bson qualified as Bson
 import Data.Pool (Pool, createPool, withResource)
 import Data.Text qualified as T
 import Database.MongoDB.Connection (Host (Host), Pipe, close, connect, defaultPort)
-import Database.MongoDB.Query (AccessMode (UnconfirmedWrites), Action, Failure (WriteFailure), MongoContext, access, auth, master, WriteResult (WriteResult))
+import Database.MongoDB.Query (Action, Failure (WriteFailure), MongoContext, access, auth, master, WriteResult (WriteResult))
 import DbConnection (DbAuth (DbAuth), DbConnection (DbConnection))
 import Foundation (App)
 import UnliftIO (MonadUnliftIO (withRunInIO), catch, throwIO)
@@ -39,9 +39,8 @@ createConnection dbHost dbName dbAuth = do
   return $ DbConnection pipe dbName
 
 testAccess :: Pipe -> T.Text -> DbAuth -> IO ()
-testAccess pipe dbName (DbAuth dbUser dbPassword) = do
-  _ <- access pipe UnconfirmedWrites dbName (auth dbUser dbPassword)
-  return ()
+testAccess pipe dbName (DbAuth dbUser dbPassword) = 
+  void $ access pipe master dbName (auth dbUser dbPassword)
 
 runQuery :: Action App a -> App a
 runQuery action = do
