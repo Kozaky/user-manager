@@ -15,8 +15,8 @@ import Data.Pool (withResource)
 import Data.Text (Text)
 import qualified Data.Text as T
 import Database (mkPool)
-import Database.MongoDB
-import DbConnection
+import Database.MongoDB (Action, Failure, access, master)
+import DbConnection (DbConnection (DbConnection))
 import Error.Middleware (catchErrorMiddleware)
 import Error.Types (ApiError (toServantError), CustomServerError (InternalServerError))
 import Foundation (App (unApp))

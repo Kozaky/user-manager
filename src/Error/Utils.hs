@@ -1,6 +1,6 @@
 module Error.Utils (mkErrorMsg, customErrorPrefix, customErrorSufix) where
 
-import Data.ByteString.Lazy qualified as LB
+import qualified Data.ByteString.Lazy as LB
 
 customErrorPrefix :: LB.ByteString
 customErrorPrefix = "{error#"

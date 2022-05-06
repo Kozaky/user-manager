@@ -1,6 +1,6 @@
 module Error.Types where
 
-import Data.ByteString.Lazy qualified as LB
+import qualified Data.ByteString.Lazy as LB
 import Error.Utils (mkErrorMsg)
 import Servant (ServerError (ServerError, errBody, errHTTPCode, errHeaders, errReasonPhrase))
 
