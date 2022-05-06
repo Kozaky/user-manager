@@ -1,8 +1,8 @@
 module Database (mkPool, runQuery, QueryAction, Documentable (..), DbFailure (..), checkWriteResult) where
 
-import Colog (logError)
+import Colog (logError, HasLog, Message)
 import Conferer (Config, fetchFromConfig)
-import Context (Context (Context, dbPool))
+import Context (Context (dbPool, Context))
 import Control.Monad.RWS (MonadReader (ask), void)
 import Control.Monad.Reader (ReaderT)
 import Data.Bson qualified as Bson
@@ -42,7 +42,7 @@ testAccess :: Pipe -> T.Text -> DbAuth -> IO ()
 testAccess pipe dbName (DbAuth dbUser dbPassword) = 
   void $ access pipe master dbName (auth dbUser dbPassword)
 
-runQuery :: Action App a -> App a
+runQuery :: (Monad m, HasLog (Context m) Message m, MonadReader (Context m) m, MonadUnliftIO m) => Action m a -> m a
 runQuery action = do
   Context {dbPool} <- ask
 
