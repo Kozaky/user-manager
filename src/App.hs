@@ -50,7 +50,6 @@ instance Context.Database Db where
   runQuery' :: (Monad m, HasLog (Context m) Message m, MonadReader (Context m) m, MonadUnliftIO m) => store -> Action m a -> m a
   runQuery' = \_db action -> do
     Context {dbPool} <- ask
-
     withRunInIO $ \run ->
       withResource dbPool $ \(DbConnection pipe db) -> run $ do
         catch
