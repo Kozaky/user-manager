@@ -1,30 +1,12 @@
-module Context (Context (..), Database (..)) where
+module Context (Context (..)) where
 
-import Colog (HasLog (getLogAction, setLogAction), LogAction, Message)
+import Colog (LogAction, Message)
 import Conferer (Config)
-import Control.Monad.Reader (MonadReader)
 import Data.Pool (Pool)
-import Database.MongoDB (Action)
-import DbConnection (DbConnection)
-import UnliftIO (MonadUnliftIO)
+import Service.MongoDbManager (DbConnection)
 
-data Context m = forall store.
-  (Database store) =>
-  Context
+data Context m = Context
   { config :: !Config,
     dbPool :: !(Pool DbConnection),
-    envLogAction :: !(LogAction m Message),
-    database :: store
+    envLogAction :: !(LogAction m Message)
   }
-
-instance HasLog (Context m) Message m where
-  getLogAction :: Context m -> LogAction m Message
-  getLogAction Context {envLogAction} = envLogAction
-  {-# INLINE getLogAction #-}
-
-  setLogAction :: LogAction m Message -> Context m -> Context m
-  setLogAction newAction Context {..} = Context {envLogAction = newAction, ..}
-  {-# INLINE setLogAction #-}
-
-class Database store where
-  runQuery' :: (Monad m, HasLog (Context m) Message m, MonadReader (Context m) m, MonadUnliftIO m) => store -> Action m a -> m a

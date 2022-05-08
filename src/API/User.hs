@@ -1,14 +1,16 @@
 module API.User (userAPI, UserAPI, CreateUser, GetUser, EditUser) where
 
-import Colog (logError)
+import Colog (HasLog, Message, logError)
+import Context (Context)
+import Control.Monad.Reader (MonadReader)
 import qualified Data.Text as T
 import Error.Types (ApiError (toServantError), CustomServerError (InternalServerError))
-import Foundation (App)
 import Servant (JSON, NoContent (NoContent), Put, ReqBody, ServerT, type (:>))
 import Servant.API (Capture, Get, Post, type (:<|>) ((:<|>)))
+import Service.MongoDbManager (MongoDbManager)
 import Service.UserManager (createUser, editUser, getUser)
 import Types.User (CreateUserReq, EditUserReq, UserDTO)
-import UnliftIO (liftIO, throwIO)
+import UnliftIO (MonadIO, liftIO, throwIO)
 import Prelude hiding (error)
 
 type UserAPI =
@@ -23,13 +25,13 @@ type GetUser = Capture "id" T.Text :> Get '[JSON] UserDTO
 
 type EditUser = Capture "id" T.Text :> ReqBody '[JSON] EditUserReq :> Put '[JSON] NoContent
 
-userAPI :: ServerT UserAPI App
+userAPI :: (MongoDbManager m, MonadIO m, HasLog (Context m) Message m, (MonadReader (Context m) m)) => ServerT UserAPI m
 userAPI = createUserH :<|> getUserH :<|> editUserH
 
-createUserH :: CreateUserReq -> App T.Text
+createUserH :: (Monad m, HasLog (Context m) Message m, MongoDbManager m, MonadIO m) => CreateUserReq -> m T.Text
 createUserH = createUser
 
-getUserH :: T.Text -> App UserDTO
+getUserH :: (Monad m, HasLog (Context m) Message m, MongoDbManager m, MonadIO m) => T.Text -> m UserDTO
 getUserH userId = do
   result <- getUser userId
 
@@ -38,7 +40,7 @@ getUserH userId = do
     Left error -> do
       liftIO . throwIO $ toServantError error
 
-editUserH :: T.Text -> EditUserReq -> App NoContent
+editUserH :: (Monad m, MongoDbManager m, MonadIO m, HasLog (Context m) Message m, MonadReader (Context m) m) => T.Text -> EditUserReq -> m NoContent
 editUserH userId req = do
   result <- editUser userId req
 

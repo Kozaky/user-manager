@@ -2,12 +2,12 @@ module Logger (mkLogger) where
 
 import Colog (LogAction, Message, Msg (Msg), cfilter, richMessageAction)
 import Conferer (Config, fetchFromConfig)
-import Foundation (App)
 import GHC.IO.Handle (hSetBuffering)
 import System.IO (BufferMode (LineBuffering), stderr, stdout)
+import UnliftIO (MonadIO)
 import Prelude hiding (log)
 
-mkLogger :: Config -> IO (LogAction App Message)
+mkLogger :: (Applicative m, MonadIO m) => Config -> IO (LogAction m Message)
 mkLogger cfg = do
   setupLogBuffers
 

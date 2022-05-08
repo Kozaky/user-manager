@@ -1,19 +1,20 @@
-module Database (mkPool, runQuery, QueryAction, Documentable (..), DbFailure (..), checkWriteResult) where
+module Service.MongoDbManager (MongoDbManager (..), mkPool, checkWriteResult, QueryAction, Documentable (..), DbFailure (..), DbConnection (..)) where
 
-import Colog (HasLog, Message, logError)
 import Conferer (Config, fetchFromConfig)
-import Context (Context (Context, dbPool))
-import Control.Monad.RWS (MonadReader (ask), void)
+import Control.Monad.RWS (void)
 import Control.Monad.Reader (ReaderT)
 import qualified Data.Bson as Bson
-import Data.Pool (Pool, createPool, withResource)
+import Data.Pool (Pool, createPool)
 import qualified Data.Text as T
 import Database.MongoDB.Connection (Host (Host), Pipe, close, connect, defaultPort)
 import Database.MongoDB.Query (Action, Failure (WriteFailure), MongoContext, WriteResult (WriteResult), access, auth, master)
-import DbConnection (DbAuth (DbAuth), DbConnection (DbConnection))
-import Error.Types (ApiError (toServantError), CustomServerError (InternalServerError))
-import Foundation (App)
-import UnliftIO (MonadUnliftIO (withRunInIO), catch, throwIO)
+
+class Monad m => MongoDbManager m where
+  runQuery :: Action m a -> m a
+
+data DbConnection = DbConnection Pipe T.Text
+
+data DbAuth = DbAuth T.Text T.Text
 
 mkPool :: Config -> IO (Pool DbConnection)
 mkPool config = do
@@ -42,19 +43,6 @@ testAccess :: Pipe -> T.Text -> DbAuth -> IO ()
 testAccess pipe dbName (DbAuth dbUser dbPassword) =
   void $ access pipe master dbName (auth dbUser dbPassword)
 
-runQuery :: (Monad m, HasLog (Context m) Message m, MonadReader (Context m) m, MonadUnliftIO m) => Action m a -> m a
-runQuery action = do
-  Context {dbPool} <- ask
-
-  withRunInIO $ \run ->
-    withResource dbPool $ \(DbConnection pipe db) -> run $ do
-      catch
-        (access pipe master db action)
-        ( \(err :: Failure) -> do
-            logError $ T.append "There has been a database error: " (T.pack . show $ err)
-            throwIO $ toServantError InternalServerError
-        )
-
 data DbFailure = DbFailure {code :: Int, msg :: String, result :: Maybe [Failure]} deriving (Show)
 
 checkWriteResult :: WriteResult -> Either DbFailure ()
@@ -62,7 +50,7 @@ checkWriteResult (WriteResult True _ _ _ _ [WriteFailure _ code msg] _) = Left $
 checkWriteResult (WriteResult True _ _ _ _ result _) = Left $ DbFailure (-1) "" (Just result)
 checkWriteResult (WriteResult False _ _ _ _ _ _) = Right ()
 
-type QueryAction a = ReaderT MongoContext App a
+type QueryAction m a = ReaderT MongoContext m a
 
 class Documentable a where
   fromDocument :: Bson.Document -> a

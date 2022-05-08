@@ -80,6 +80,16 @@ tests:
     default-extensions: 
       - ExplicitNamespaces
       - DataKinds
+      - DerivingStrategies
+      - GeneralizedNewtypeDeriving
+      - NamedFieldPuns
+      - ScopedTypeVariables
+      - RecordWildCards
+      - TypeSynonymInstances
+      - FlexibleInstances
+      - MultiParamTypeClasses
+      - InstanceSigs
+      - OverloadedStrings
     dependencies:
       - user-manager
       - hspec

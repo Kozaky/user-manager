@@ -21,8 +21,6 @@ library
       API.User
       App
       Context
-      Database
-      DbConnection
       Error.Middleware
       Error.Types
       Error.Utils
@@ -30,6 +28,7 @@ library
       Logger
       Model.User
       Query.User
+      Service.MongoDbManager
       Service.UserManager
       Types.User
   other-modules:
@@ -121,12 +120,23 @@ test-suite spec
   main-is: Spec.hs
   other-modules:
       API.UserSpec
+      MockApp
       Paths_user_manager
   hs-source-dirs:
       test
   default-extensions:
       ExplicitNamespaces
       DataKinds
+      DerivingStrategies
+      GeneralizedNewtypeDeriving
+      NamedFieldPuns
+      ScopedTypeVariables
+      RecordWildCards
+      TypeSynonymInstances
+      FlexibleInstances
+      MultiParamTypeClasses
+      InstanceSigs
+      OverloadedStrings
   ghc-options: -Wall -O2
   build-depends:
       QuickCheck

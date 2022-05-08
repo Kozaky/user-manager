@@ -3,23 +3,24 @@ module Query.User (findUserByEmail, insertUser, findUserById, updateUser) where
 import Data.Bson (Document, ObjectId, Value, (=:))
 import Data.Functor ((<&>))
 import qualified Data.Text as T
-import Database (DbFailure, QueryAction, checkWriteResult)
 import Database.MongoDB.Query (Collection, Select (select), UpdateOption (Upsert), findOne, insert, updateAll)
+import Service.MongoDbManager (DbFailure, QueryAction, checkWriteResult)
 import Types.User (EditUserReq, Request (Request), unEmail)
+import UnliftIO (MonadIO)
 
 userCollection :: Collection
 userCollection = "user"
 
-findUserByEmail :: T.Text -> QueryAction (Maybe Document)
+findUserByEmail :: (MonadIO m) => T.Text -> QueryAction m (Maybe Document)
 findUserByEmail email = findOne (select ["email" =: email] userCollection)
 
-insertUser :: Document -> QueryAction Value
+insertUser :: (MonadIO m) => Document -> QueryAction m Value
 insertUser = insert userCollection
 
-findUserById :: ObjectId -> QueryAction (Maybe Document)
+findUserById :: (MonadIO m) => ObjectId -> QueryAction m (Maybe Document)
 findUserById userId = findOne (select ["_id" =: userId] userCollection)
 
-updateUser :: ObjectId -> EditUserReq -> QueryAction (Either DbFailure ())
+updateUser :: (MonadIO m) => ObjectId -> EditUserReq -> QueryAction m (Either DbFailure ())
 updateUser userId req = do
   updateAll userCollection [(["_id" =: userId], updates, [Upsert])] <&> checkWriteResult
   where

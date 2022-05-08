@@ -3,7 +3,7 @@ module Model.User (User (..)) where
 import Data.Bson (ObjectId, (=:))
 import qualified Data.Bson as Bson
 import qualified Data.Text as T
-import Database (Documentable (fromDocument, toDocument))
+import Service.MongoDbManager (Documentable (fromDocument, toDocument))
 
 data User = User {id :: Maybe T.Text, name :: T.Text, email :: T.Text, password :: T.Text}
   deriving (Eq, Read, Show)
