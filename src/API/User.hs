@@ -1,17 +1,16 @@
 module API.User (userAPI, UserAPI, CreateUser, GetUser, EditUser) where
 
 import Colog (HasLog, Message, logError)
-import Context (Context)
 import Control.Monad.Reader (MonadReader)
 import qualified Data.Text as T
 import Error.Types (ApiError (toServantError), CustomServerError (InternalServerError))
 import Servant (JSON, NoContent (NoContent), Put, ReqBody, ServerT, type (:>))
 import Servant.API (Capture, Get, Post, type (:<|>) ((:<|>)))
-import Service.MongoDbManager (MongoDbManager)
-import Service.UserManager (createUser, editUser, getUser)
+import Service.UserManager (editUser, createUser, getUser)
 import Types.User (CreateUserReq, EditUserReq, UserDTO)
 import UnliftIO (MonadIO, liftIO, throwIO)
 import Prelude hiding (error)
+import Repo.User (UserRepository)
 
 type UserAPI =
   "users" :> (CreateUser :<|> GetUser :<|> EditUser)
@@ -25,13 +24,13 @@ type GetUser = Capture "id" T.Text :> Get '[JSON] UserDTO
 
 type EditUser = Capture "id" T.Text :> ReqBody '[JSON] EditUserReq :> Put '[JSON] NoContent
 
-userAPI :: (MongoDbManager m, MonadIO m, HasLog (Context m) Message m, (MonadReader (Context m) m)) => ServerT UserAPI m
+userAPI :: (UserRepository m, MonadReader ctx m, HasLog ctx Message m, MonadIO m) => ServerT UserAPI m
 userAPI = createUserH :<|> getUserH :<|> editUserH
 
-createUserH :: (Monad m, HasLog (Context m) Message m, MongoDbManager m, MonadIO m) => CreateUserReq -> m T.Text
+createUserH :: (UserRepository m) => CreateUserReq -> m T.Text
 createUserH = createUser
 
-getUserH :: (Monad m, HasLog (Context m) Message m, MongoDbManager m, MonadIO m) => T.Text -> m UserDTO
+getUserH :: (UserRepository m, MonadIO m) => T.Text -> m UserDTO
 getUserH userId = do
   result <- getUser userId
 
@@ -40,7 +39,7 @@ getUserH userId = do
     Left error -> do
       liftIO . throwIO $ toServantError error
 
-editUserH :: (Monad m, MongoDbManager m, MonadIO m, HasLog (Context m) Message m, MonadReader (Context m) m) => T.Text -> EditUserReq -> m NoContent
+editUserH :: (UserRepository m, MonadReader ctx m, HasLog ctx Message m, MonadIO m) => T.Text -> EditUserReq -> m NoContent
 editUserH userId req = do
   result <- editUser userId req
 

@@ -63,6 +63,7 @@ library:
     - DeriveGeneric
     - DuplicateRecordFields
     - LambdaCase
+    - PatternSynonyms
 
 executables:
   user-manager:
@@ -90,6 +91,7 @@ tests:
       - MultiParamTypeClasses
       - InstanceSigs
       - OverloadedStrings
+      - PatternSynonyms
     dependencies:
       - user-manager
       - hspec
@@ -99,4 +101,5 @@ tests:
       - servant-client
       - http-client
       - hspec-discover
+      - containers
 

@@ -21,13 +21,14 @@ library
       API.User
       App
       Context
+      DbConnection
       Error.Middleware
       Error.Types
       Error.Utils
       Foundation
       Logger
       Model.User
-      Query.User
+      Repo.User
       Service.MongoDbManager
       Service.UserManager
       Types.User
@@ -60,6 +61,7 @@ library
       DeriveGeneric
       DuplicateRecordFields
       LambdaCase
+      PatternSynonyms
   ghc-options: -Wall -O2
   build-depends:
       aeson
@@ -120,7 +122,8 @@ test-suite spec
   main-is: Spec.hs
   other-modules:
       API.UserSpec
-      MockApp
+      API.Utils
+      Service.UserManagerSpec
       Paths_user_manager
   hs-source-dirs:
       test
@@ -137,6 +140,7 @@ test-suite spec
       MultiParamTypeClasses
       InstanceSigs
       OverloadedStrings
+      PatternSynonyms
   ghc-options: -Wall -O2
   build-depends:
       QuickCheck
@@ -147,6 +151,7 @@ test-suite spec
     , co-log
     , conferer
     , conferer-warp
+    , containers
     , hspec
     , hspec-discover
     , hspec-wai

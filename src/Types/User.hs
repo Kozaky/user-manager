@@ -1,4 +1,4 @@
-module Types.User (UserDTO (..), CreateUserReq, userDTOfromUser, userFromCreateUserReq, mkEmail, Email (unEmail), EditUserReq, Request (..)) where
+module Types.User (UserDTO (..), CreateUserReq, userDTOfromUser, userFromCreateUserReq, mkEmail, Email(), pattern Email, EditUserReq, Request (..)) where
 
 import Data.Aeson
   ( FromJSON (parseJSON),
@@ -9,7 +9,7 @@ import Data.Aeson
   )
 import Data.Aeson.Encoding (text)
 import qualified Data.ByteString.Lazy.Char8 as B
-import Data.Functor.Identity (Identity, runIdentity)
+import Data.Functor.Identity (Identity (Identity), runIdentity)
 import Data.Maybe (fromMaybe)
 import qualified Data.Text as T
 import Error.Types (ApiError (toBody), UserError (InvalidEmailError))
@@ -62,27 +62,30 @@ instance ToJSON EditUserReq where
   toEncoding = genericToEncoding defaultOptions
 
 userFromCreateUserReq :: CreateUserReq -> User
-userFromCreateUserReq (Request name email password) =
+userFromCreateUserReq (Request name (Identity (UnsafeEmail email)) password) =
   User
     { id = Nothing,
       name = runIdentity name,
-      email = unEmail $ runIdentity email,
+      email = runIdentity (Identity email),
       password = runIdentity password
     }
 
-newtype Email = Email {unEmail :: T.Text} deriving (Show, Generic)
+newtype Email = UnsafeEmail T.Text deriving (Show, Generic)
 
-mkEmail :: T.Text -> Either UserError Email
+pattern Email :: T.Text -> Email
+pattern Email a <- UnsafeEmail a
+
+mkEmail :: T.Text -> Maybe Email
 mkEmail emailText
-  | T.any (== '@') emailText = Right $ Email emailText
-  | otherwise = Left InvalidEmailError
+  | T.any (== '@') emailText = Just $ UnsafeEmail emailText
+  | otherwise = Nothing
 
 instance FromJSON Email where
   parseJSON = withText "email" $ \emailText -> do
     let mEmail = mkEmail emailText
     case mEmail of
-      Right email -> return email
-      Left msg -> fail . B.unpack . toBody $ msg
+      Just email -> return email
+      Nothing -> fail . B.unpack . toBody $ InvalidEmailError 
 
 instance ToJSON Email where
-  toEncoding (Email unEmail) = text unEmail
+  toEncoding (UnsafeEmail email) = text email

@@ -1,20 +1,17 @@
-module Service.MongoDbManager (MongoDbManager (..), mkPool, checkWriteResult, QueryAction, Documentable (..), DbFailure (..), DbConnection (..)) where
+module Service.MongoDbManager (mkPool, checkWriteResult, QueryAction, Documentable (..), DbFailure (..), runQuery) where
 
 import Conferer (Config, fetchFromConfig)
-import Control.Monad.RWS (void)
-import Control.Monad.Reader (ReaderT)
+import Control.Monad.Reader (ReaderT, void, MonadReader (ask))
 import qualified Data.Bson as Bson
-import Data.Pool (Pool, createPool)
+import Data.Pool (Pool, createPool, withResource)
 import qualified Data.Text as T
 import Database.MongoDB.Connection (Host (Host), Pipe, close, connect, defaultPort)
-import Database.MongoDB.Query (Action, Failure (WriteFailure), MongoContext, WriteResult (WriteResult), access, auth, master)
-
-class Monad m => MongoDbManager m where
-  runQuery :: Action m a -> m a
-
-data DbConnection = DbConnection Pipe T.Text
-
-data DbAuth = DbAuth T.Text T.Text
+import Database.MongoDB.Query (Failure (WriteFailure), WriteResult (WriteResult), access, auth, master, Action, MongoContext)
+import DbConnection (DbAuth (..), DbConnection (..))
+import Context (HasDbPool (getDbPool))
+import UnliftIO (withRunInIO, MonadUnliftIO, catch, throwIO)
+import Colog (HasLog, Message, logError)
+import Error.Types (ApiError(toServantError), CustomServerError (InternalServerError))
 
 mkPool :: Config -> IO (Pool DbConnection)
 mkPool config = do
@@ -42,6 +39,19 @@ createConnection dbHost dbName dbAuth = do
 testAccess :: Pipe -> T.Text -> DbAuth -> IO ()
 testAccess pipe dbName (DbAuth dbUser dbPassword) =
   void $ access pipe master dbName (auth dbUser dbPassword)
+
+runQuery :: (MonadReader ctx m, Monad m, HasLog ctx Message m, HasDbPool ctx, MonadUnliftIO m) => Action m a -> m a
+runQuery action = do
+  ctx <- ask
+
+  withRunInIO $ \run ->
+    withResource (getDbPool ctx) $ \(DbConnection pipe db) -> run $ do
+      catch
+        (access pipe master db action)
+        ( \(err :: Failure) -> do
+            logError $ T.append "There has been a database error: " (T.pack . show $ err)
+            throwIO $ toServantError InternalServerError
+        )
 
 data DbFailure = DbFailure {code :: Int, msg :: String, result :: Maybe [Failure]} deriving (Show)
 

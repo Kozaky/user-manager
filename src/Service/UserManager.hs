@@ -1,30 +1,25 @@
 module Service.UserManager (getUser, createUser, editUser) where
 
-import Data.Functor ((<&>))
 import qualified Data.Text as T
 import Error.Types (UserError (UserNotFoundError))
-import Query.User
-  ( findUserById,
-    insertUser,
-    updateUser,
-  )
-import Service.MongoDbManager (DbFailure, Documentable (fromDocument, toDocument), MongoDbManager, runQuery)
+import Repo.User (UserRepository(..))
+import Service.MongoDbManager (DbFailure, Documentable (fromDocument, toDocument))
 import Types.User (CreateUserReq, EditUserReq, UserDTO, userDTOfromUser, userFromCreateUserReq)
-import UnliftIO (MonadIO)
 
-createUser :: (MongoDbManager m, MonadIO m) => CreateUserReq -> m T.Text
-createUser req =
-  runQuery $
-    insertUser (toDocument $ userFromCreateUserReq req) <&> (T.pack . show)
+createUser :: (UserRepository m) => CreateUserReq -> m T.Text
+createUser req = do
+  let newUser = toDocument $ userFromCreateUserReq req
+  userId <- save newUser
 
-getUser :: (MongoDbManager m, MonadIO m) => T.Text -> m (Either UserError UserDTO)
+  return . T.pack . show $ userId
+
+getUser :: (UserRepository m) => T.Text -> m (Either UserError UserDTO)
 getUser userId = do
-  runQuery $ do
-    mDoc <- findUserById $ read . T.unpack $ userId
+  mDoc <- find $ read . T.unpack $ userId
 
-    case mDoc of
-      Just doc -> return . Right . userDTOfromUser . fromDocument $ doc
-      Nothing -> return $ Left UserNotFoundError
+  case mDoc of
+    Just doc -> return . Right . userDTOfromUser . fromDocument $ doc
+    Nothing -> return $ Left UserNotFoundError
 
-editUser :: (MongoDbManager m, MonadIO m) => T.Text -> EditUserReq -> m (Either DbFailure ())
-editUser userId req = runQuery $ updateUser (read . T.unpack $ userId) req
+editUser :: (UserRepository m) => T.Text -> EditUserReq -> m (Either DbFailure ())
+editUser userId = update (read . T.unpack $ userId)

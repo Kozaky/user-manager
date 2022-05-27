@@ -1,14 +1,9 @@
 module Foundation (App (..), Environment) where
 
-import Colog (HasLog (getLogAction, setLogAction), LogAction, Message, logError)
+import Colog (HasLog (getLogAction, setLogAction), LogAction, Message)
 import Context (Context (..), envLogAction)
-import Control.Monad.Reader (MonadIO, MonadReader (ask), ReaderT)
-import Data.Pool (withResource)
-import qualified Data.Text as T
-import Database.MongoDB (Action, Failure, access, master)
-import Error.Types (CustomServerError (InternalServerError), toServantError)
-import Service.MongoDbManager (DbConnection (DbConnection), MongoDbManager (runQuery))
-import UnliftIO (MonadUnliftIO (withRunInIO), catch, throwIO)
+import Control.Monad.Reader (MonadReader, ReaderT)
+import UnliftIO (MonadIO, MonadUnliftIO)
 
 type Environment m = ReaderT (Context m) IO
 
@@ -23,20 +18,6 @@ newtype App a = App {unApp :: Environment App a}
       MonadReader (Context App),
       Functor
     )
-
-instance MongoDbManager App where
-  runQuery :: Action App a -> App a
-  runQuery = \action -> do
-    Context {dbPool} <- ask
-
-    withRunInIO $ \run ->
-      withResource dbPool $ \(DbConnection pipe db) -> run $ do
-        catch
-          (access pipe master db action)
-          ( \(err :: Failure) -> do
-              logError $ T.append "There has been a database error: " (T.pack . show $ err)
-              throwIO $ toServantError InternalServerError
-          )
 
 instance HasLog (Context App) Message App where
   getLogAction :: Context App -> LogAction App Message

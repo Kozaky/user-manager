@@ -17,13 +17,14 @@ import Network.Wai.Middleware.Prometheus (PrometheusSettings (PrometheusSettings
 import Prometheus (register)
 import Prometheus.Metric.GHC (ghcMetrics)
 import Servant (Application, Handler (Handler), HasServer (ServerT), hoistServer, layout, serve, type (:<|>) ((:<|>)))
-import Service.MongoDbManager (MongoDbManager, mkPool)
+import Service.MongoDbManager (mkPool)
 import UnliftIO (MonadIO, try)
+import Repo.User (UserRepository)
 
 runApp :: Context App -> App a -> IO a
 runApp ctx application = runReaderT (unApp application) ctx
 
-server :: (Monad m, MongoDbManager m, MonadIO m, HasLog (Context m) Message m, MonadReader (Context m) m) => ServerT Api m
+server :: (UserRepository m, MonadReader ctx m, HasLog ctx Message m, MonadIO m) => ServerT Api m
 server = userAPI :<|> routesH
 
 routesH :: Monad m => m Text
