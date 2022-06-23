@@ -1,6 +1,6 @@
 module API where
 
-import API.User (UserAPI)
+import User.UserAPI (UserAPI)
 import Data.Proxy (Proxy (Proxy))
 import Data.Text (Text)
 import Servant.API
@@ -10,9 +10,9 @@ import Servant.API
     type (:>),
   )
 
-type Api =
+type API =
   UserAPI
     :<|> "routes" :> Get '[PlainText] Text
 
-api :: Proxy Api
+api :: Proxy API
 api = Proxy

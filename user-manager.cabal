@@ -18,20 +18,20 @@ extra-source-files:
 library
   exposed-modules:
       API
-      API.User
-      App
-      Context
-      DbConnection
+      App.App
+      App.Context
+      App.Foundation
+      App.Logger
+      Database.Connection
+      Database.MongoDBService
+      Error.ErrorTypes
       Error.Middleware
-      Error.Types
       Error.Utils
-      Foundation
-      Logger
-      Model.User
-      Repo.User
-      Service.MongoDbManager
-      Service.UserManager
-      Types.User
+      User.User
+      User.UserAPI
+      User.UserRepository
+      User.UserService
+      User.UserTypes
   other-modules:
       Paths_user_manager
   hs-source-dirs:
@@ -121,9 +121,9 @@ test-suite spec
   type: exitcode-stdio-1.0
   main-is: Spec.hs
   other-modules:
-      API.UserSpec
-      API.Utils
-      Service.UserManagerSpec
+      User.UserAPISpec
+      User.UserServiceSpec
+      Utils
       Paths_user_manager
   hs-source-dirs:
       test

@@ -1,21 +1,21 @@
-module Repo.User (findUserByEmail, insertUser, findUserById, updateUser, UserRepository(..)) where
+module User.UserRepository (findUserByEmail, insertUser, findUserById, updateUser, UserRepository(..)) where
 
 import Data.Bson (Document, ObjectId, Value, (=:))
 import Data.Functor ((<&>))
 import qualified Data.Text as T
 import Database.MongoDB.Query (Collection, Select (select), UpdateOption (Upsert), findOne, insert, updateAll)
-import Service.MongoDbManager (DbFailure, QueryAction, checkWriteResult, runQuery)
-import Types.User (EditUserReq, Request (Request), Email, pattern Email)
+import Database.MongoDBService (DBFailure, QueryAction, checkWriteResult, runQuery)
+import User.UserTypes (EditUserReq, Request (Request), Email, pattern Email)
 import UnliftIO (MonadIO, MonadUnliftIO)
 import Colog (Message, HasLog)
 import Control.Monad.Reader (MonadReader)
-import Context (HasDbPool)
-import Foundation (App)
+import App.Context (HasDbPool)
+import App.Foundation (App)
 
 class (Monad m) => UserRepository m where
   find :: ObjectId ->  m (Maybe Document)
   save :: Document -> m Value
-  update :: ObjectId -> EditUserReq -> m (Either DbFailure ())
+  update :: ObjectId -> EditUserReq -> m (Either DBFailure ())
 
 instance UserRepository App where
   find = findUserById
@@ -34,7 +34,7 @@ insertUser doc = runQuery $ insert userCollection doc
 findUserById :: (HasLog ctx Message m, HasDbPool ctx, MonadReader ctx m, MonadIO m, MonadUnliftIO m) => ObjectId -> m (Maybe Document)
 findUserById userId = runQuery $ findOne (select ["_id" =: userId] userCollection)
 
-updateUser :: (HasLog ctx Message m, HasDbPool ctx, MonadReader ctx m, MonadIO m, MonadUnliftIO m) => ObjectId -> EditUserReq -> m (Either DbFailure ())
+updateUser :: (HasLog ctx Message m, HasDbPool ctx, MonadReader ctx m, MonadIO m, MonadUnliftIO m) => ObjectId -> EditUserReq -> m (Either DBFailure ())
 updateUser userId req =
   runQuery $ updateAll userCollection [(["_id" =: userId], updates, [Upsert])] <&> checkWriteResult
   where

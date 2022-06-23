@@ -8,7 +8,7 @@ import qualified Data.ByteString.Char8 as Char8
 import qualified Data.ByteString.Lazy as LB
 import qualified Data.Char as Char
 import Data.IORef (modifyIORef', newIORef, readIORef)
-import Error.Types (ApiError (errorCode, errorMessage), CustomServerError (InternalServerError))
+import Error.ErrorTypes (APIError (errorCode, errorMessage), CustomServerError (InternalServerError))
 import Error.Utils (customErrorPrefix, customErrorSufix)
 import GHC.Exts (fromList)
 import Network.HTTP.Types (Status (Status), hContentType)

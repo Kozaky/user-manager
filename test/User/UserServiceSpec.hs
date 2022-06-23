@@ -1,15 +1,15 @@
-module Service.UserManagerSpec where
+module User.UserServiceSpec where
 
 import Control.Monad.State (StateT (runStateT), gets, modify)
 import Data.Bson (Document, ObjectId, Value, merge, val, (=:))
 import Data.Either (isLeft, isRight)
 import Data.Functor.Identity (Identity (Identity))
 import qualified Data.Map as M
-import Repo.User (UserRepository (..))
-import Service.MongoDbManager (DbFailure)
-import Service.UserManager (createUser, editUser, getUser)
+import User.UserRepository (UserRepository (..))
+import Database.MongoDBService (DBFailure)
+import User.UserService (createUser, editUser, getUser)
 import Test.Hspec (Spec, describe, it, shouldBe, shouldSatisfy)
-import Types.User (CreateUserReq, EditUserReq, Request (..), mkEmail, pattern Email)
+import User.UserTypes (CreateUserReq, EditUserReq, Request (..), mkEmail, pattern Email)
 
 newtype TestDb m a = TestDb (StateT (M.Map ObjectId Document) m a)
   deriving newtype (Functor, Applicative, Monad)
@@ -27,7 +27,7 @@ instance (Monad m) => UserRepository (TestDb m) where
   find :: ObjectId -> TestDb m (Maybe Document)
   find objId = TestDb . gets $ \users -> M.lookup objId users
 
-  update :: ObjectId -> EditUserReq -> TestDb m (Either DbFailure ())
+  update :: ObjectId -> EditUserReq -> TestDb m (Either DBFailure ())
   update objId req = do
     TestDb . modify $ \users -> M.update (mergeWithOld req) objId users
     return $ Right ()

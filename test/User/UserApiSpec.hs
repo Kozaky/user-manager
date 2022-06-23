@@ -1,10 +1,10 @@
-module API.UserSpec where
+module User.UserAPISpec where
 
-import API.User (UserAPI)
+import User.UserAPI (UserAPI)
 import Data.Either (isRight)
 import Data.Functor.Identity (Identity (Identity))
 import qualified Data.Text as T
-import API.Utils (withApp)
+import Utils (withApp)
 import Network.HTTP.Client (defaultManagerSettings, newManager)
 import Servant (Proxy (Proxy))
 import Servant.API (NoContent, type (:<|>) ((:<|>)))
@@ -17,7 +17,7 @@ import Servant.Client
     runClientM,
   )
 import Test.Hspec (Spec, around, describe, it, runIO, shouldBe)
-import Types.User (CreateUserReq, Request (Request), UserDTO, mkEmail)
+import User.UserTypes (CreateUserReq, Request (Request), UserDTO, mkEmail)
 import Prelude hiding (id)
 
 mkUserReq :: T.Text -> T.Text -> T.Text -> IO CreateUserReq
@@ -27,13 +27,13 @@ mkUserReq name emailText password =
       return $ Request (Identity name) (Identity email) (Identity password)
     Nothing -> fail "Incorrect email"
 
-userApi :: Proxy UserAPI
-userApi = Proxy
+userAPI :: Proxy UserAPI
+userAPI = Proxy
 
 createUser :: Request Identity -> ClientM T.Text
 getUser :: T.Text -> ClientM UserDTO
 editUser :: T.Text -> Request Maybe -> ClientM NoContent
-createUser :<|> getUser :<|> editUser = client userApi
+createUser :<|> getUser :<|> editUser = client userAPI
 
 spec :: Spec
 spec = do

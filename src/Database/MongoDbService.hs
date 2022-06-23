@@ -1,4 +1,4 @@
-module Service.MongoDbManager (mkPool, checkWriteResult, QueryAction, Documentable (..), DbFailure (..), runQuery) where
+module Database.MongoDBService (mkPool, checkWriteResult, QueryAction, Documentable (..), DBFailure (..), runQuery) where
 
 import Conferer (Config, fetchFromConfig)
 import Control.Monad.Reader (ReaderT, void, MonadReader (ask))
@@ -7,13 +7,13 @@ import Data.Pool (Pool, createPool, withResource)
 import qualified Data.Text as T
 import Database.MongoDB.Connection (Host (Host), Pipe, close, connect, defaultPort)
 import Database.MongoDB.Query (Failure (WriteFailure), WriteResult (WriteResult), access, auth, master, Action, MongoContext)
-import DbConnection (DbAuth (..), DbConnection (..))
-import Context (HasDbPool (getDbPool))
+import Database.Connection (DbAuth (..), Connection (..))
+import App.Context (HasDbPool (getDbPool))
 import UnliftIO (withRunInIO, MonadUnliftIO, catch, throwIO)
 import Colog (HasLog, Message, logError)
-import Error.Types (ApiError(toServantError), CustomServerError (InternalServerError))
+import Error.ErrorTypes (APIError(toServantError), CustomServerError (InternalServerError))
 
-mkPool :: Config -> IO (Pool DbConnection)
+mkPool :: Config -> IO (Pool Connection)
 mkPool config = do
   dbName <- Conferer.fetchFromConfig "mongo.db.name" config
   dbHost <- Conferer.fetchFromConfig "mongo.db.host" config
@@ -25,16 +25,16 @@ mkPool config = do
 
   createPool
     (createConnection dbHost dbName (DbAuth dbUser dbPassword))
-    (\(DbConnection pipe _) -> close pipe)
+    (\(Connection pipe _) -> close pipe)
     dbPoolSize
     (fromInteger dbMaxIdle)
     dbConns
 
-createConnection :: String -> T.Text -> DbAuth -> IO DbConnection
+createConnection :: String -> T.Text -> DbAuth -> IO Connection
 createConnection dbHost dbName dbAuth = do
   pipe <- connect (Host dbHost defaultPort)
   testAccess pipe dbName dbAuth
-  return $ DbConnection pipe dbName
+  return $ Connection pipe dbName
 
 testAccess :: Pipe -> T.Text -> DbAuth -> IO ()
 testAccess pipe dbName (DbAuth dbUser dbPassword) =
@@ -45,7 +45,7 @@ runQuery action = do
   ctx <- ask
 
   withRunInIO $ \run ->
-    withResource (getDbPool ctx) $ \(DbConnection pipe db) -> run $ do
+    withResource (getDbPool ctx) $ \(Connection pipe db) -> run $ do
       catch
         (access pipe master db action)
         ( \(err :: Failure) -> do
@@ -53,11 +53,11 @@ runQuery action = do
             throwIO $ toServantError InternalServerError
         )
 
-data DbFailure = DbFailure {code :: Int, msg :: String, result :: Maybe [Failure]} deriving (Show)
+data DBFailure = DBFailure {code :: Int, msg :: String, result :: Maybe [Failure]} deriving (Show)
 
-checkWriteResult :: WriteResult -> Either DbFailure ()
-checkWriteResult (WriteResult True _ _ _ _ [WriteFailure _ code msg] _) = Left $ DbFailure code msg Nothing
-checkWriteResult (WriteResult True _ _ _ _ result _) = Left $ DbFailure (-1) "" (Just result)
+checkWriteResult :: WriteResult -> Either DBFailure ()
+checkWriteResult (WriteResult True _ _ _ _ [WriteFailure _ code msg] _) = Left $ DBFailure code msg Nothing
+checkWriteResult (WriteResult True _ _ _ _ result _) = Left $ DBFailure (-1) "" (Just result)
 checkWriteResult (WriteResult False _ _ _ _ _ _) = Right ()
 
 type QueryAction m a = ReaderT MongoContext m a

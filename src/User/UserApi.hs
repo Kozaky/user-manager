@@ -1,16 +1,16 @@
-module API.User (userAPI, UserAPI, CreateUser, GetUser, EditUser) where
+module User.UserAPI (UserAPI, userAPI, CreateUser, GetUser, EditUser) where
 
 import Colog (HasLog, Message, logError)
 import Control.Monad.Reader (MonadReader)
 import qualified Data.Text as T
-import Error.Types (ApiError (toServantError), CustomServerError (InternalServerError))
+import Error.ErrorTypes (APIError (toServantError), CustomServerError (InternalServerError))
 import Servant (JSON, NoContent (NoContent), Put, ReqBody, ServerT, type (:>))
 import Servant.API (Capture, Get, Post, type (:<|>) ((:<|>)))
-import Service.UserManager (editUser, createUser, getUser)
-import Types.User (CreateUserReq, EditUserReq, UserDTO)
+import User.UserService (editUser, createUser, getUser)
+import User.UserTypes (CreateUserReq, EditUserReq, UserDTO)
 import UnliftIO (MonadIO, liftIO, throwIO)
 import Prelude hiding (error)
-import Repo.User (UserRepository)
+import User.UserRepository (UserRepository)
 
 type UserAPI =
   "users" :> (CreateUser :<|> GetUser :<|> EditUser)

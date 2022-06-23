@@ -1,18 +1,18 @@
-module API.Utils (withApp) where
+module Utils (withApp) where
 
 import API (api)
-import App (server)
+import App.App (server)
 import qualified Conferer
 import Control.Monad.Except (ExceptT (ExceptT))
 import Control.Monad.Reader (ReaderT (runReaderT))
 import qualified Data.Text as T
-import Foundation (App, unApp)
-import Logger (mkLogger)
+import App.Foundation (App, unApp)
+import App.Logger (mkLogger)
 import Network.Wai (Application)
 import qualified Network.Wai.Handler.Warp as Warp
 import Servant (Handler (Handler), hoistServer, serve)
-import Service.MongoDbManager (mkPool)
-import Context (Context (Context))
+import Database.MongoDBService (mkPool)
+import App.Context (Context (Context))
 import UnliftIO (try)
 
 mkApp :: IO Application

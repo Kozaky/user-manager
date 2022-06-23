@@ -1,10 +1,10 @@
-module Service.UserManager (getUser, createUser, editUser) where
+module User.UserService (getUser, createUser, editUser) where
 
 import qualified Data.Text as T
-import Error.Types (UserError (UserNotFoundError))
-import Repo.User (UserRepository(..))
-import Service.MongoDbManager (DbFailure, Documentable (fromDocument, toDocument))
-import Types.User (CreateUserReq, EditUserReq, UserDTO, userDTOfromUser, userFromCreateUserReq)
+import Error.ErrorTypes (UserError (UserNotFoundError))
+import User.UserRepository (UserRepository(..))
+import Database.MongoDBService (DBFailure, Documentable (fromDocument, toDocument))
+import User.UserTypes (CreateUserReq, EditUserReq, UserDTO, userDTOfromUser, userFromCreateUserReq)
 
 createUser :: (UserRepository m) => CreateUserReq -> m T.Text
 createUser req = do
@@ -21,5 +21,5 @@ getUser userId = do
     Just doc -> return . Right . userDTOfromUser . fromDocument $ doc
     Nothing -> return $ Left UserNotFoundError
 
-editUser :: (UserRepository m) => T.Text -> EditUserReq -> m (Either DbFailure ())
+editUser :: (UserRepository m) => T.Text -> EditUserReq -> m (Either DBFailure ())
 editUser userId = update (read . T.unpack $ userId)

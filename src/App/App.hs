@@ -1,30 +1,30 @@
-module App (run, server) where
+module App.App (run, server) where
 
-import API (Api, api)
-import API.User (userAPI)
+import API (API, api)
+import User.UserAPI (userAPI)
 import Colog (HasLog, Message, logTextStdout, (<&))
 import Conferer (fetch, fetchFromConfig, mkConfig)
 import Conferer.FromConfig.Warp ()
-import Context (Context (Context))
+import App.Context (Context (Context))
 import Control.Monad.Except (ExceptT (ExceptT))
 import Control.Monad.Reader (MonadReader, ReaderT (runReaderT))
 import Data.Text (Text)
 import Error.Middleware (catchErrorMiddleware)
-import Foundation (App, unApp)
-import Logger (mkLogger)
+import App.Foundation (App, unApp)
+import App.Logger (mkLogger)
 import qualified Network.Wai.Handler.Warp as Warp
 import Network.Wai.Middleware.Prometheus (PrometheusSettings (PrometheusSettings), prometheus)
 import Prometheus (register)
 import Prometheus.Metric.GHC (ghcMetrics)
 import Servant (Application, Handler (Handler), HasServer (ServerT), hoistServer, layout, serve, type (:<|>) ((:<|>)))
-import Service.MongoDbManager (mkPool)
+import Database.MongoDBService (mkPool)
 import UnliftIO (MonadIO, try)
-import Repo.User (UserRepository)
+import User.UserRepository (UserRepository)
 
 runApp :: Context App -> App a -> IO a
 runApp ctx application = runReaderT (unApp application) ctx
 
-server :: (UserRepository m, MonadReader ctx m, HasLog ctx Message m, MonadIO m) => ServerT Api m
+server :: (UserRepository m, MonadReader ctx m, HasLog ctx Message m, MonadIO m) => ServerT API m
 server = userAPI :<|> routesH
 
 routesH :: Monad m => m Text

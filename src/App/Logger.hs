@@ -1,4 +1,4 @@
-module Logger (mkLogger) where
+module App.Logger (mkLogger) where
 
 import Colog (LogAction, Message, Msg (Msg), cfilter, richMessageAction)
 import Conferer (Config, fetchFromConfig)

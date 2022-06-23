@@ -1,10 +1,10 @@
-module Error.Types where
+module Error.ErrorTypes where
 
 import qualified Data.ByteString.Lazy as LB
 import Error.Utils (mkErrorMsg)
 import Servant (ServerError (ServerError, errBody, errHTTPCode, errHeaders, errReasonPhrase))
 
-class ApiError e where
+class APIError e where
   httpCode :: e -> Int
   errorCode :: e -> LB.ByteString
   errorMessage :: e -> LB.ByteString
@@ -24,7 +24,7 @@ class ApiError e where
 data CustomServerError = InternalServerError
   deriving (Show)
 
-instance ApiError CustomServerError where
+instance APIError CustomServerError where
   httpCode InternalServerError = 500
 
   errorCode InternalServerError = "server_error"
@@ -34,7 +34,7 @@ instance ApiError CustomServerError where
 data UserError = UserNotFoundError | InvalidEmailError
   deriving (Show)
 
-instance ApiError UserError where
+instance APIError UserError where
   httpCode UserNotFoundError = 404
   httpCode InvalidEmailError = 400
 

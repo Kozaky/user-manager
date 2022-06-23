@@ -1,4 +1,4 @@
-module Types.User (UserDTO (..), CreateUserReq, userDTOfromUser, userFromCreateUserReq, mkEmail, Email(), pattern Email, EditUserReq, Request (..)) where
+module User.UserTypes (UserDTO (..), CreateUserReq, userDTOfromUser, userFromCreateUserReq, mkEmail, Email(), pattern Email, EditUserReq, Request (..)) where
 
 import Data.Aeson
   ( FromJSON (parseJSON),
@@ -12,9 +12,9 @@ import qualified Data.ByteString.Lazy.Char8 as B
 import Data.Functor.Identity (Identity (Identity), runIdentity)
 import Data.Maybe (fromMaybe)
 import qualified Data.Text as T
-import Error.Types (ApiError (toBody), UserError (InvalidEmailError))
+import Error.ErrorTypes (APIError (toBody), UserError (InvalidEmailError))
 import GHC.Generics (Generic)
-import Model.User (User (..))
+import User.User (User (..))
 
 data UserDTO = UserDTO
   { id :: !T.Text,

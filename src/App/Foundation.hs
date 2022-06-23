@@ -1,7 +1,7 @@
-module Foundation (App (..), Environment) where
+module App.Foundation (App (..), Environment) where
 
 import Colog (HasLog (getLogAction, setLogAction), LogAction, Message)
-import Context (Context (..), envLogAction)
+import App.Context (Context (..), envLogAction)
 import Control.Monad.Reader (MonadReader, ReaderT)
 import UnliftIO (MonadIO, MonadUnliftIO)
 
