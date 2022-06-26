@@ -2,6 +2,9 @@ FROM haskell:8.10.7 as builder
 
 WORKDIR /user-manager
 
+RUN apt-get update \
+    && apt-get install -y libnuma-dev
+
 RUN cabal update
 
 # Add just the .cabal file to capture dependencies

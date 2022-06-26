@@ -143,8 +143,7 @@ test-suite spec
       PatternSynonyms
   ghc-options: -Wall -O2
   build-depends:
-      QuickCheck
-    , aeson
+      aeson
     , base >=4.9 && <5
     , bson
     , bytestring
@@ -164,7 +163,6 @@ test-suite spec
     , resource-pool
     , servant
     , servant-client
-    , servant-quickcheck
     , servant-server
     , template-haskell
     , text

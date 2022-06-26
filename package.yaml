@@ -96,8 +96,6 @@ tests:
       - user-manager
       - hspec
       - hspec-wai
-      - QuickCheck
-      - servant-quickcheck
       - servant-client
       - http-client
       - hspec-discover
